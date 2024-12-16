@@ -9,6 +9,11 @@ name = "grid_indexes"
 crate-type = ["cdylib"]
 
 [dependencies]
-geo = { version = "0.29.3", features = ["multithreading", "use-proj", "use-serde"] }
+geo = { version = "0.29.3", features = [
+  "multithreading",
+  "use-proj",
+  "use-serde",
+] }
+pyo3 = "0.23.3"
 pyo3-arrow = "0.6.0"
 rstar = "0.12.2"

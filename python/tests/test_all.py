@@ -1,4 +1,3 @@
-import pytest
 import grid_indexes
 
 
