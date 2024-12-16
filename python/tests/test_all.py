@@ -1,5 +1,5 @@
-import grid_indexes
+import grid_indexing
 
 
 def test_sum_as_string():
-    assert grid_indexes.sum_as_string(1, 1) == "2"
+    assert grid_indexing.sum_as_string(1, 1) == "2"

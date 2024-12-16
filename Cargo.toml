@@ -1,11 +1,11 @@
 [package]
-name = "grid-indexes"
+name = "grid-indexing"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "grid_indexes"
+name = "grid_indexing"
 crate-type = ["cdylib"]
 
 [dependencies]
