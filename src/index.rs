@@ -20,15 +20,39 @@ impl Index {
 mod tests {
     use super::*;
 
-    use geo;
-    use geo::Dimension;
-    use geoarrow::array::PolygonArray;
+    use geo::{LineString, Polygon};
+    use geoarrow::array::{PolygonArray, PolygonBuilder};
+    use geoarrow::datatypes::Dimension;
 
     #[test]
     fn create_from_polygon_array() {
-        let polygon1 = geo::polygon!(x: 30, y: 20);
-        let polygon2 = geo::polygon!(x: 10, y: -50);
-        let array: PolygonArray = (vec![polygon, polygon2].as_slice(), Dimension::XY).into();
+        let polygon1 = Polygon::new(
+            LineString::from(vec![
+                (-5.0, 0.0),
+                (-10.0, 5.0),
+                (-10.0, 10.0),
+                (-5.0, 15.0),
+                (5.0, 15.0),
+                (10.0, 10.0),
+                (10.0, 5.0),
+                (5.0, 0.0),
+            ]),
+            vec![],
+        );
+        let polygon2 = Polygon::new(
+            LineString::from(vec![
+                (-90.0, -45.0),
+                (-90.0, 45.0),
+                (90.0, 45.0),
+                (90.0, -45.0),
+            ]),
+            vec![],
+        );
+
+        let mut builder = PolygonBuilder::new(Dimension::XY);
+        let _ = builder.push_polygon(Some(&polygon1));
+        let _ = builder.push_polygon(Some(&polygon2));
+        let array: PolygonArray = builder.finish();
 
         let index = Index::create(array);
     }
