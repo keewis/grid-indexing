@@ -9,7 +9,7 @@ pub struct Index {
 }
 
 impl Index {
-    fn create(cell_geoms: PolygonArray) -> Self {
+    pub fn create(cell_geoms: PolygonArray) -> Self {
         let rtree = cell_geoms.create_rstar_rtree();
 
         return Index { rtree: rtree };
