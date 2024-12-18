@@ -1,8 +1,9 @@
-use geoarrow::array::PolygonArray;
-use rstar::RTree;
+use geoarrow::ArrayBase;
+use rstar::{RTree, RTreeObject};
 
-struct Index {
-    rtree: RTree;
+pub struct Index<T>
+where T: RTreeObject {
+    rtree: RTree<T>;
 }
 
 impl Index {
