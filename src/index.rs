@@ -15,3 +15,21 @@ impl Index {
         };
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use geoarrow::array::PointArray;
+    use geo;
+    use geo::Dimension;
+
+    #[test]
+    fn create_from_point_array() {
+        let point1 = geo::point!(x: 30, y: 20);
+        let point2 = geo::point!(x: 10, y: -50);
+        let array: PointArray = (vec![point1, point2].as_slice(), Dimension::XY).into();
+
+        let index = Index::create(array);
+    }
+}
