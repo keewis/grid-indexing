@@ -1,7 +1,8 @@
-import xarray as xr
 import cf_xarray
 import numpy as np
 import shapely
+import xarray as xr
+
 
 def broadcast_spatial_coords(ds):
     [broadcast] = xr.broadcast(
@@ -35,16 +36,14 @@ def shapely_to_cf(ds):
 ds = xr.tutorial.open_dataset("air_temperature")
 # construct polygons
 with_geometries = (
-    ds
-    .pipe(broadcast_spatial_coords)
+    ds.pipe(broadcast_spatial_coords)
     .cf.add_bounds(["lon", "lat"])
     .pipe(bounds_to_geometries)
     .drop_vars(["lon_bounds", "lat_bounds"])
 )
 
 encoded = (
-    with_geometries
-    .cf.add_bounds(["lon", "lat"])
+    with_geometries.cf.add_bounds(["lon", "lat"])
     .pipe(bounds_to_geometries)
     .drop_vars(["lon_bounds", "lat_bounds"])
 )
