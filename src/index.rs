@@ -8,14 +8,14 @@ use super::trait_::RStarRTree;
 
 #[pyclass]
 pub struct Index {
-    rtree: RTree<CachedEnvelope<Polygon>>,
+    tree: RTree<CachedEnvelope<Polygon>>,
 }
 
 impl Index {
     pub fn create(cell_geoms: PolygonArray<8>) -> Self {
         let rtree = cell_geoms.create_rstar_rtree();
 
-        Index { rtree: rtree }
+        Index { tree: rtree }
     }
 }
 
