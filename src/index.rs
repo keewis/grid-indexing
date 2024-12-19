@@ -1,8 +1,10 @@
 use geo::Polygon;
-use geoarrow::array::PolygonArray;
+use geoarrow::array::{AsNativeArray, PolygonArray};
+// use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3_geoarrow::PyNativeArray;
 use rstar::{primitives::CachedEnvelope, RTree};
+use std::sync::Arc;
 
 use super::trait_::RStarRTree;
 
@@ -19,17 +21,17 @@ impl Index {
     }
 }
 
+fn as_polygon(raw: PyNativeArray) -> PyResult<PolygonArray<8>> {
+    let native_array = raw.into_inner().into_inner();
+
+    native_array.as_polygon_opt()
+}
+
 #[pymethods]
 impl Index {
     #[new]
-    pub fn new(py: Python, cell_geoms: PyNativeArray) -> PyResult<Self> {
-        let polygons: PolygonArray<8> = (cell_geoms
-            .into_inner()
-            .into_inner()
-            .as_any()
-            .downcast_ref::<PolygonArray<8>>()
-            .unwrap()
-            .clone());
+    pub fn new(cell_geoms: PyNativeArray) -> PyResult<Self> {
+        let polygons = as_polygon(cell_geoms)?;
 
         Ok(Index::create(polygons))
     }
@@ -68,10 +70,10 @@ mod tests {
             vec![],
         );
 
-        let mut builder = PolygonBuilder::new(Dimension::XY);
+        let mut builder = PolygonBuilder::new();
         let _ = builder.push_polygon(Some(&polygon1));
         let _ = builder.push_polygon(Some(&polygon2));
-        let array: PolygonArray = builder.finish();
+        let array: PolygonArray<8> = builder.finish();
 
         let index = Index::create(array);
     }
