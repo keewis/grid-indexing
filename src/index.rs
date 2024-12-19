@@ -1,18 +1,37 @@
 use geo::Polygon;
 use geoarrow::array::PolygonArray;
+use pyo3::prelude::*;
+use pyo3_geoarrow::PyNativeArray;
 use rstar::{primitives::CachedEnvelope, RTree};
 
 use super::trait_::RStarRTree;
 
+#[pyclass]
 pub struct Index {
     rtree: RTree<CachedEnvelope<Polygon>>,
 }
 
 impl Index {
-    pub fn create(cell_geoms: PolygonArray) -> Self {
+    pub fn create(cell_geoms: PolygonArray<8>) -> Self {
         let rtree = cell_geoms.create_rstar_rtree();
 
-        return Index { rtree: rtree };
+        Index { rtree: rtree }
+    }
+}
+
+#[pymethods]
+impl Index {
+    #[new]
+    pub fn new(py: Python, cell_geoms: PyNativeArray) -> PyResult<Self> {
+        let polygons: PolygonArray<8> = (cell_geoms
+            .into_inner()
+            .into_inner()
+            .as_any()
+            .downcast_ref::<PolygonArray<8>>()
+            .unwrap()
+            .clone());
+
+        Ok(Index::create(polygons))
     }
 }
 
