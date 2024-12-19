@@ -14,7 +14,7 @@ geo = { version = "0.29.3", features = [
   "use-proj",
   "use-serde",
 ] }
-geoarrow = { version = "0.4.0-beta.2", features = ["parquet"] }
-pyo3 = "0.23.3"
-pyo3-arrow = "0.6.0"
+geoarrow = { version = "0.4.0-beta.1", features = ["proj", "rayon"] }
+pyo3 = { version = "0.21.0", features = ["experimental-declarative-modules"] }
+pyo3-geoarrow = "0.1.0-beta.1"
 rstar = "0.12.2"
