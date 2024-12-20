@@ -1,8 +1,8 @@
-use arrow_buffer::OffsetBuffer;
+use arrow_buffer::{OffsetBuffer, ScalarBuffer};
 use geo::Polygon;
 use geoarrow::array::{metadata::ArrayMetadata, CoordBuffer, InterleavedCoordBuffer, PolygonArray};
 use geoarrow::datatypes::Dimension;
-use numpy::{PyReadonlyArray1, PyReadonlyArray2};
+use numpy::PyReadonlyArray2;
 use pyo3::exceptions::PyOSError;
 use pyo3::prelude::*;
 use rstar::{primitives::CachedEnvelope, RTree};
@@ -27,15 +27,16 @@ impl Index {
     #[new]
     pub fn new<'py>(
         coords: PyReadonlyArray2<'py, f64>,
-        geometry_offsets: PyReadonlyArray1<'py, usize>,
-        ring_offsets: PyReadonlyArray1<'py, usize>,
+        geometry_offsets: Vec<i32>,
+        ring_offsets: Vec<i32>,
     ) -> PyResult<Self> {
         let coord_buffer = CoordBuffer::Interleaved(InterleavedCoordBuffer::new(
-            coords.as_array().flatten().to_vec().into(),
+            ScalarBuffer::from(coords.as_array().flatten().to_vec()),
             Dimension::XY,
         ));
-        let geom_offset_buffer = OffsetBuffer::from_lengths(geometry_offsets.as_array().to_vec());
-        let ring_offset_buffer = OffsetBuffer::from_lengths(ring_offsets.as_array().to_vec());
+
+        let geom_offset_buffer = OffsetBuffer::new(ScalarBuffer::from(geometry_offsets));
+        let ring_offset_buffer = OffsetBuffer::new(ScalarBuffer::from(ring_offsets));
 
         let polygons = PolygonArray::try_new(
             coord_buffer,
