@@ -1,10 +1,11 @@
+use arrow_buffer::OffsetBuffer;
 use geo::Polygon;
-use geoarrow::array::{AsNativeArray, PolygonArray};
-// use pyo3::exceptions::PyValueError;
+use geoarrow::array::{metadata::ArrayMetadata, CoordBuffer, InterleavedCoordBuffer, PolygonArray};
+use geoarrow::datatypes::Dimension;
+use numpy::{PyReadonlyArray1, PyReadonlyArray2};
+use pyo3::exceptions::PyOSError;
 use pyo3::prelude::*;
-use pyo3_geoarrow::PyNativeArray;
 use rstar::{primitives::CachedEnvelope, RTree};
-use std::sync::Arc;
 
 use super::trait_::RStarRTree;
 
@@ -14,26 +15,40 @@ pub struct Index {
 }
 
 impl Index {
-    pub fn create(cell_geoms: PolygonArray<8>) -> Self {
+    pub fn create(cell_geoms: PolygonArray) -> Self {
         let rtree = cell_geoms.create_rstar_rtree();
 
         Index { tree: rtree }
     }
 }
 
-fn as_polygon(raw: PyNativeArray) -> PyResult<PolygonArray<8>> {
-    let native_array = raw.into_inner().into_inner();
-
-    native_array.as_polygon_opt()
-}
-
 #[pymethods]
 impl Index {
     #[new]
-    pub fn new(cell_geoms: PyNativeArray) -> PyResult<Self> {
-        let polygons = as_polygon(cell_geoms)?;
+    pub fn new<'py>(
+        coords: PyReadonlyArray2<'py, f64>,
+        geometry_offsets: PyReadonlyArray1<'py, usize>,
+        ring_offsets: PyReadonlyArray1<'py, usize>,
+    ) -> PyResult<Self> {
+        let coord_buffer = CoordBuffer::Interleaved(InterleavedCoordBuffer::new(
+            coords.as_array().flatten().to_vec().into(),
+            Dimension::XY,
+        ));
+        let geom_offset_buffer = OffsetBuffer::from_lengths(geometry_offsets.as_array().to_vec());
+        let ring_offset_buffer = OffsetBuffer::from_lengths(ring_offsets.as_array().to_vec());
 
-        Ok(Index::create(polygons))
+        let polygons = PolygonArray::try_new(
+            coord_buffer,
+            geom_offset_buffer,
+            ring_offset_buffer,
+            None,
+            ArrayMetadata::from_authority_code("epsg:4326".to_string()).into(),
+        );
+
+        match polygons {
+            Err(error) => Err(PyOSError::new_err(error.to_string())),
+            Ok(p) => Ok(Index::create(p)),
+        }
     }
 }
 

@@ -9,7 +9,7 @@ pub trait RStarRTree<T: RTreeObject> {
     fn create_rstar_rtree(self) -> RTree<T>;
 }
 
-impl RStarRTree<CachedEnvelope<Polygon>> for PolygonArray<8> {
+impl RStarRTree<CachedEnvelope<Polygon>> for PolygonArray {
     fn create_rstar_rtree(self) -> RTree<CachedEnvelope<Polygon>> {
         let cells: Vec<_> = self
             .iter()
