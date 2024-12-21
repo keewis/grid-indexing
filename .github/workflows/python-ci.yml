@@ -62,6 +62,11 @@ jobs:
           create-args: >-
             python=${{matrix.python-version}}
 
+      - name: Help finding installed libraries
+        run: |
+          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> "$GITHUB_ENV"
+
       - name: Install the package
         run: |
           python -m pip install --no-deps -e .
