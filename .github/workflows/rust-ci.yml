@@ -19,6 +19,9 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
 
+    env:
+      FORCE_COLOR: 3
+
     defaults:
       run:
         shell: bash -l {0}
@@ -44,6 +47,9 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+
+    env:
+      FORCE_COLOR: 3
 
     defaults:
       run:
