@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+dependabot:
+  - rust
+  - shapely
+  - numpy
+  - pytest
+  - pytest-cov
