@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   test:
-    name: Rust CI ${{ matrix.os }}
+    name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
 
     strategy:
