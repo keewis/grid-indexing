@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.10", "3.12", "3.13"]
 
     env:
       FORCE_COLOR: 3
@@ -34,9 +35,10 @@ jobs:
         with:
           environment-name: rust-tests
           cache-environment: true
-          cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
+          cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
             rust
+            python=${{ matrix.python-version }}
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
       - name: Run tests
@@ -50,6 +52,10 @@ jobs:
 
     env:
       FORCE_COLOR: 3
+
+    strategy:
+      matrix:
+        python-version: ["3.12"]
 
     defaults:
       run:
@@ -67,6 +73,7 @@ jobs:
           create-args: >-
             rust
             proj
+            python=${{ matrix.python-version }}
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
       - name: Tweak environment to find proj
