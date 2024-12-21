@@ -17,7 +17,7 @@ jobs:
     name: detect ci trigger
     runs-on: ubuntu-latest
     if: |
-      github.repository == 'xarray-contrib/xarray-array-testing'
+      github.repository == 'keewis/grid-indexing'
       && (github.event_name == 'push' || github.event_name == 'pull_request')
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
