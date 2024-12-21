@@ -36,6 +36,10 @@ repos:
       - id: blackdoc
         additional_dependencies: ["black==24.10.0"]
       - id: blackdoc-autoupdate-black
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v0.10.0
+    hooks:
+      - id: zizmor
   - repo: https://github.com/crate-ci/typos
     rev: v1.28.3
     hooks:
