@@ -39,6 +39,7 @@ jobs:
           create-args: >-
             rust
             python=${{ matrix.python-version }}
+            proj
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
       - name: Run tests
