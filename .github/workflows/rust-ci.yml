@@ -76,10 +76,6 @@ jobs:
             python=${{ matrix.python-version }}
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
-      - name: Tweak environment to find proj
-        run: |
-          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> "$GITHUB_ENV"
-          echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> "$GITHUB_ENV"
       - name: Cargo clippy
         run: |
           cargo clippy --tests -- -D warnings
