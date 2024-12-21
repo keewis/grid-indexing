@@ -25,13 +25,35 @@ jobs:
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: ci/requirements/environment-rust.yaml
-          environment-name: tests
+          environment-name: rust-tests
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
+          create-args: >-
+            rust
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: |
           cargo build --tests --keep-going
           cargo test --no-fail-fast
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: rust-tests
+          cache-environment: true
+          cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
+          create-args: >-
+            rust
+      - name: Create rust cache
+        uses: Swatinem/rust-cache@v2
+      - name: Cargo clippy
+        run: |
+          cargo clippy --tests -- -D warnings
