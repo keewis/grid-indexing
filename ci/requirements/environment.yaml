@@ -1,6 +1,6 @@
 channels:
   - conda-forge
-dependabot:
+dependencies:
   - rust
   - shapely
   - numpy
