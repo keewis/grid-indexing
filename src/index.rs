@@ -25,8 +25,8 @@ impl Index {
 #[pymethods]
 impl Index {
     #[new]
-    pub fn new<'py>(
-        coords: PyReadonlyArray2<'py, f64>,
+    pub fn new(
+        coords: PyReadonlyArray2<'_, f64>,
         geometry_offsets: Vec<i32>,
         ring_offsets: Vec<i32>,
     ) -> PyResult<Self> {
@@ -59,7 +59,6 @@ mod tests {
 
     use geo::{LineString, Polygon};
     use geoarrow::array::{PolygonArray, PolygonBuilder};
-    use geoarrow::datatypes::Dimension;
 
     #[test]
     fn create_from_polygon_array() {
@@ -86,11 +85,11 @@ mod tests {
             vec![],
         );
 
-        let mut builder = PolygonBuilder::new();
+        let mut builder = PolygonBuilder::new(Dimension::XY);
         let _ = builder.push_polygon(Some(&polygon1));
         let _ = builder.push_polygon(Some(&polygon2));
-        let array: PolygonArray<8> = builder.finish();
+        let array: PolygonArray = builder.finish();
 
-        let index = Index::create(array);
+        let _index = Index::create(array);
     }
 }

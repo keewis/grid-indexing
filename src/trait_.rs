@@ -16,10 +16,10 @@ impl RStarRTree<CachedEnvelope<Polygon>> for PolygonArray {
             .flatten()
             .map(|cell| {
                 let geom: Polygon = cell.to_geo();
-                CachedEnvelope::<Polygon>::new(geom.into())
+                CachedEnvelope::<Polygon>::new(geom)
             })
             .collect();
 
-        return RTree::bulk_load_with_params(cells);
+        RTree::bulk_load_with_params(cells)
     }
 }
