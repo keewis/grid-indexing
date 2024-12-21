@@ -9,14 +9,14 @@ repos:
     rev: v3.4.2
     hooks:
       - id: prettier
-        args: [--cache-location=.prettier_cache/cache]
+        args: ["--cache-location=.prettier_cache/cache"]
   - repo: https://github.com/ComPWA/taplo-pre-commit
     rev: v0.9.3
     hooks:
       - id: taplo-format
-        args: [--option, array_auto_collapse=false]
+        args: ["--option", "array_auto_collapse=false"]
       - id: taplo-lint
-        args: [--no-schema]
+        args: ["--no-schema"]
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.23
     hooks:
@@ -25,11 +25,11 @@ repos:
     rev: v0.8.3
     hooks:
       - id: ruff
-        args: [--fix]
+        args: ["--fix", "--show-fixes"]
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 24.10.0
     hooks:
-      - id: black-jupyter
+      - id: black
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
@@ -50,7 +50,7 @@ repos:
         pass_filenames: false # This makes it a lot faster
       - id: cargo-clippy
         name: cargo clippy
-        entry: cargo clippy --
+        entry: cargo clippy --tests -- -D warnings
         language: system
         types: [rust]
         pass_filenames: false # This makes it a lot faster
