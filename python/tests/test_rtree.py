@@ -1,5 +1,6 @@
 import numpy as np
 import shapely
+from geoarrow.rust.core import from_shapely
 
 from grid_indexing import Index
 
@@ -24,9 +25,5 @@ def test_create_index():
     vertices = np.moveaxis(vertices_, (0, 1), (-2, -1))
     polygons = shapely.polygons(vertices)
 
-    geom_type, coords, (ring_offsets, geom_offsets) = shapely.to_ragged_array(
-        polygons.flatten()
-    )
-
-    index = Index(coords, geom_offsets, ring_offsets)
+    index = Index(from_shapely(polygons.flatten()))
     assert isinstance(index, Index)
