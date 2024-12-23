@@ -1,0 +1,104 @@
+name: Rust CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}.${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-ci-trigger:
+    name: detect ci trigger
+    runs-on: ubuntu-latest
+    if: |
+      github.repository == 'keewis/grid-indexing'
+      && (github.event_name == 'push' || github.event_name == 'pull_request')
+    outputs:
+      triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: xarray-contrib/ci-trigger@v1
+        id: detect-trigger
+        with:
+          keyword: "[skip-ci]"
+
+  test:
+    name: ${{ matrix.os }} py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+
+    needs: detect-ci-trigger
+    if: needs.detect-ci-trigger.outputs.triggered == 'false'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.10", "3.12", "3.13"]
+
+    env:
+      FORCE_COLOR: 3
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: rust-tests
+          cache-environment: true
+          cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
+          create-args: >-
+            rust
+            python=${{ matrix.python-version }}
+            proj
+      - name: Create rust cache
+        uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: |
+          cargo build --tests --keep-going
+          cargo test --no-fail-fast
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    env:
+      FORCE_COLOR: 3
+
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: rust-tests
+          cache-environment: true
+          cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
+          create-args: >-
+            rust
+            proj
+            python=${{ matrix.python-version }}
+      - name: Create rust cache
+        uses: Swatinem/rust-cache@v2
+      - name: Cargo clippy
+        run: |
+          cargo clippy --tests -- -D warnings

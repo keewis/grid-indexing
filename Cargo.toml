@@ -9,11 +9,13 @@ name = "grid_indexing"
 crate-type = ["cdylib"]
 
 [dependencies]
+arrow-buffer = "53.3.0"
 geo = { version = "0.29.3", features = [
   "multithreading",
   "use-proj",
   "use-serde",
 ] }
-pyo3 = "0.23.3"
-pyo3-arrow = "0.6.0"
+geoarrow = "0.4.0-beta.2"
+numpy = "0.23.0"
+pyo3 = { version = "0.23.3" }
 rstar = "0.12.2"

@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+dependencies:
+  - rust
+  - pkg-config
+  - shapely
+  - numpy
+  - pytest
+  - pytest-cov
