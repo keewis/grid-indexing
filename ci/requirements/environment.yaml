@@ -7,6 +7,6 @@ dependencies:
   - c-compiler
   - shapely
   - numpy
-  - sparse
+  - sparse>=0.15
   - pytest
   - pytest-cov
