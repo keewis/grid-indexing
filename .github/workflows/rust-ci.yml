@@ -62,8 +62,14 @@ jobs:
             rust
             python=${{ matrix.python-version }}
             proj
+            xz
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
+      - name: Force the compiler toolchain to use the conda env
+        run: |
+          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkg-config" >> $GITHUB_ENV
+          echo "CPATH=$CONDA_PREFIX/include" >> $GITHUB_ENV
+
       - name: Run tests
         run: |
           cargo build --tests --keep-going
