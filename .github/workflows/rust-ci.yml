@@ -65,10 +65,14 @@ jobs:
             xz
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
-      - name: Force the compiler toolchain to use the conda env
+
+      - name: Help finding installed libraries
         run: |
-          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkg-config" >> $GITHUB_ENV
-          echo "CPATH=$CONDA_PREFIX/include" >> $GITHUB_ENV
+          mkdir .cargo
+          echo "[env]" >> .cargo/config.toml
+          echo 'PKG_CONFIG_PATH = "$CONDA_PREFIX/lib/pkgconfig"' >> .cargo/config.toml
+          echo 'CPATH = "$CONDA_PREFIX/include"' >> .cargo/config.toml
+          echo 'LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"' >> .cargo/config.toml
 
       - name: Run tests
         run: |
