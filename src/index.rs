@@ -75,6 +75,19 @@ impl FromPyArray for PolygonArray {
     }
 }
 
+fn index_pointer<T>(array: &[Vec<T>]) -> Vec<usize> {
+    let first_element: Vec<Vec<T>> = vec![vec![]];
+
+    first_element
+        .iter()
+        .chain(array.iter())
+        .scan(0, |cur, el| {
+            *cur += el.len();
+            Some(*cur)
+        })
+        .collect()
+}
+
 impl Index {
     pub fn create(cell_geoms: PolygonArray) -> Self {
         let cells: Vec<_> = cell_geoms
@@ -111,7 +124,7 @@ impl Index {
             .map(|cell| self.query_overlaps_one(cell.to_geo()))
             .collect();
 
-        let counts = results.iter().map(|found| found.len()).collect();
+        let counts = index_pointer(&results);
         let values = results.into_iter().flatten().collect();
 
         (values, counts)
