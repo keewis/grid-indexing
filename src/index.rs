@@ -104,8 +104,8 @@ impl AsSparse for Vec<Vec<usize>> {
         Python::with_gil(|py| {
             let arg = (
                 PyArray1::from_vec(py, data),
-                PyArray1::from_vec(py, indices),
-                PyArray1::from_vec(py, counts),
+                PyArray1::from_iter(py, indices.into_iter().map(|v| v as i64)),
+                PyArray1::from_iter(py, counts.into_iter().map(|v| v as i64)),
             );
             let sparse = PyModule::import(py, "sparse")?;
             let args = (arg,);
