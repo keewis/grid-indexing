@@ -99,7 +99,7 @@ impl Index {
             .collect()
     }
 
-    pub fn overlaps(&self, cells: PolygonArray) -> Vec<i32> {
+    pub fn overlaps(&self, cells: PolygonArray) -> (Vec<usize>, Vec<usize>) {
         // steps
         // 1. for each polygon, compute (cached) envelopes
         // 2. query the tree using the envelopes
@@ -110,9 +110,11 @@ impl Index {
             .flatten()
             .map(|cell| self.query_overlaps_one(cell.to_geo()))
             .collect();
-        println!("result: {:?}", results);
 
-        Vec::<i32>::new()
+        let counts = results.iter().map(|found| found.len()).collect();
+        let values = results.into_iter().flatten().collect();
+
+        (values, counts)
     }
 }
 
