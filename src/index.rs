@@ -1,17 +1,13 @@
 use std::ops::Deref;
 
-use arrow_buffer::{OffsetBuffer, ScalarBuffer};
 use geo::{Intersects, Polygon};
-use geoarrow::array::{
-    metadata::ArrayMetadata, ArrayBase, CoordBuffer, InterleavedCoordBuffer, PolygonArray,
-};
-use geoarrow::datatypes::Dimension;
-use geoarrow::error::GeoArrowError;
+use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
-use numpy::{PyArray1, PyReadonlyArray2};
+use numpy::PyArray1;
 use pyo3::exceptions::PyOSError;
 use pyo3::prelude::*;
 use pyo3::types::IntoPyDict;
+use pyo3_arrow::PyArray;
 use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
 
 #[derive(Debug)]
@@ -44,38 +40,6 @@ impl RTreeObject for NumberedCell {
 #[pyclass]
 pub struct Index {
     tree: RTree<NumberedCell>,
-}
-
-trait FromPyArray {
-    fn from_pyarray(
-        coords: PyReadonlyArray2<'_, f64>,
-        geometry_offsets: Vec<i32>,
-        ring_offsets: Vec<i32>,
-    ) -> Result<PolygonArray, GeoArrowError>;
-}
-
-impl FromPyArray for PolygonArray {
-    fn from_pyarray(
-        coords: PyReadonlyArray2<'_, f64>,
-        geometry_offsets: Vec<i32>,
-        ring_offsets: Vec<i32>,
-    ) -> Result<PolygonArray, GeoArrowError> {
-        let coord_buffer = CoordBuffer::Interleaved(InterleavedCoordBuffer::new(
-            ScalarBuffer::from(coords.as_array().flatten().to_vec()),
-            Dimension::XY,
-        ));
-
-        let geom_offset_buffer = OffsetBuffer::new(ScalarBuffer::from(geometry_offsets));
-        let ring_offset_buffer = OffsetBuffer::new(ScalarBuffer::from(ring_offsets));
-
-        PolygonArray::try_new(
-            coord_buffer,
-            geom_offset_buffer,
-            ring_offset_buffer,
-            None,
-            ArrayMetadata::from_authority_code("epsg:4326".to_string()).into(),
-        )
-    }
 }
 
 fn index_pointer<T>(array: &[Vec<T>]) -> Vec<usize> {
@@ -158,34 +122,37 @@ impl Index {
     }
 }
 
+trait AsPolygonArray {
+    fn into_polygon_array(self) -> PyResult<PolygonArray>;
+}
+
+impl AsPolygonArray for PyArray {
+    fn into_polygon_array(self) -> PyResult<PolygonArray> {
+        let (array, field) = self.into_inner();
+
+        let polygons = PolygonArray::try_from((array.as_ref(), field.as_ref()));
+
+        match polygons {
+            Ok(p) => Ok(p),
+            Err(error) => Err(PyOSError::new_err(error.to_string())),
+        }
+    }
+}
+
 #[pymethods]
 impl Index {
     #[new]
-    pub fn new(
-        coords: PyReadonlyArray2<'_, f64>,
-        geometry_offsets: Vec<i32>,
-        ring_offsets: Vec<i32>,
-    ) -> PyResult<Self> {
-        let polygons = PolygonArray::from_pyarray(coords, geometry_offsets, ring_offsets);
+    pub fn new(source_cells: PyArray) -> PyResult<Self> {
+        let polygons = source_cells.into_polygon_array();
 
-        match polygons {
-            Err(error) => Err(PyOSError::new_err(error.to_string())),
-            Ok(p) => Ok(Index::create(p)),
-        }
+        polygons.map(Index::create)
     }
 
-    pub fn query_overlap(
-        &self,
-        coords: PyReadonlyArray2<'_, f64>,
-        geom_offsets: Vec<i32>,
-        ring_offsets: Vec<i32>,
-    ) -> PyResult<Py<PyAny>> {
-        let cells = PolygonArray::from_pyarray(coords, geom_offsets, ring_offsets);
+    pub fn query_overlap(&self, target_cells: PyArray) -> PyResult<Py<PyAny>> {
+        let polygons = target_cells.into_polygon_array()?;
 
-        match cells {
-            Ok(c) => self.overlaps(&c).into_sparse((c.len(), self.tree.size())),
-            Err(error) => Err(PyOSError::new_err(error.to_string())),
-        }
+        self.overlaps(&polygons)
+            .into_sparse((polygons.len(), self.tree.size()))
     }
 }
 
@@ -194,7 +161,8 @@ mod tests {
     use super::*;
 
     use geo::{LineString, Polygon};
-    use geoarrow::array::{PolygonArray, PolygonBuilder};
+    use geoarrow::array::PolygonBuilder;
+    use geoarrow::datatypes::Dimension;
 
     #[test]
     fn create_from_polygon_array() {
