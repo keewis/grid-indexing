@@ -3,7 +3,9 @@ use std::ops::Deref;
 use geo::{Intersects, Polygon};
 use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
+use pyo3::intern;
 use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyType};
 use pyo3_arrow::PyArray;
 use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
 
@@ -86,6 +88,24 @@ impl Index {
         let polygons = source_cells.into_polygon_array();
 
         polygons.map(Index::create)
+    }
+
+    #[classmethod]
+    pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<PyAny>) -> PyResult<Self> {
+        let array = Python::with_gil(|py| {
+            let geoarrow = PyModule::import(py, "geoarrow.rust.core")?;
+            let crs = intern!(py, "epsg:4326");
+
+            let kwargs = [("crs", crs)].into_py_dict(py)?;
+
+            let pyobj = geoarrow
+                .getattr("from_shapely")?
+                .call((geoms,), Some(&kwargs))?;
+
+            PyArray::extract_bound(&pyobj)
+        })?;
+
+        Self::new(array)
     }
 
     pub fn query_overlap(&self, target_cells: PyArray) -> PyResult<Py<PyAny>> {
