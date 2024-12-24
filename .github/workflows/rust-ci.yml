@@ -74,6 +74,9 @@ jobs:
           echo 'CPATH = "$CONDA_PREFIX/include"' >> .cargo/config.toml
           echo 'LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"' >> .cargo/config.toml
 
+          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> $GITHUB_ENV
+
       - name: Run tests
         run: |
           cargo build --tests --keep-going
