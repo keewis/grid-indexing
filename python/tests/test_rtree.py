@@ -29,9 +29,7 @@ def test_create_index():
 
     cells = create_cells(x, y).flatten()
 
-    type_, coords, (ring_offsets, geom_offsets) = shapely.to_ragged_array(cells)
-
-    index = Index(coords, geom_offsets, ring_offsets)
+    index = Index.from_shapely(cells)
     assert isinstance(index, Index)
 
 
@@ -41,7 +39,7 @@ def test_query_overlap():
     ).flatten()
     target_cells = source_cells
 
-    index = Index(*as_parts(source_cells))
+    index = Index.from_shapely(source_cells)
 
     actual = index.query_overlap(*as_parts(target_cells))
 
