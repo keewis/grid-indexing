@@ -4,5 +4,5 @@ dependencies:
   - proj
   - pkg-config
   - openssl
-  - sqlite3
+  - sqlite
   - xz
