@@ -5,6 +5,8 @@ dependencies:
   - pkg-config
   - cxx-compiler
   - c-compiler
+  - proj
+  - sqlite
   - shapely
   - numpy
   - sparse>=0.15
