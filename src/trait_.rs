@@ -24,8 +24,8 @@ fn index_pointer<T>(array: &[Vec<T>]) -> Vec<usize> {
 
 impl AsSparse for Vec<Vec<usize>> {
     fn into_sparse(self, shape: (usize, usize)) -> PyResult<PyObject> {
-        let counts = index_pointer(&self);
-        let indices: Vec<usize> = self.into_iter().flatten().collect();
+        let counts: Vec<i64> = index_pointer(&self).into_iter().map(|v| v as i64).collect();
+        let indices: Vec<i64> = self.into_iter().flatten().map(|v| v as i64).collect();
         let data = [true].repeat(indices.len());
 
         Python::with_gil(|py| {
