@@ -5,5 +5,6 @@ dependencies:
   - pkg-config
   - shapely
   - numpy
+  - proj
   - pytest
   - pytest-cov
