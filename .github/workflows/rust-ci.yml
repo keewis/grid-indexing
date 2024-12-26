@@ -78,7 +78,10 @@ jobs:
 
           echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> $GITHUB_ENV
-          echo "PYO3_PYTHON=$CONDA_PREFIX/bin/python" >> $GITHUB_ENV
+
+          pushd $CONDA_PREFIX
+          echo "PYO3_PYTHON=$(readlink -f bin/python)" >> $GITHUB_ENV
+          popd
 
       - name: Run tests
         run: |
