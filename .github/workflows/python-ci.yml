@@ -64,12 +64,6 @@ jobs:
 
       - name: Help finding installed libraries
         run: |
-          mkdir .cargo
-          echo "[env]" >> .cargo/config.toml
-          echo 'PKG_CONFIG_PATH = "$CONDA_PREFIX/lib/pkgconfig"' >> .cargo/config.toml
-          echo 'CPATH = "$CONDA_PREFIX/include"' >> .cargo/config.toml
-          echo 'LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"' >> .cargo/config.toml
-
           echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> $GITHUB_ENV
 
