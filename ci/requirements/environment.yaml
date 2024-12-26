@@ -3,8 +3,11 @@ channels:
 dependencies:
   - rust
   - pkg-config
+  - cxx-compiler
+  - c-compiler
   - shapely
   - numpy
   - proj
+  - sparse>=0.15
   - pytest
   - pytest-cov
