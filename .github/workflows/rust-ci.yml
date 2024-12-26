@@ -67,10 +67,9 @@ jobs:
 
       - name: Help finding installed libraries
         run: |
-          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> $GITHUB_ENV
-
           pushd $CONDA_PREFIX
+          echo "PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$(readlink -f bin/python)" >> $GITHUB_ENV
           popd
 
