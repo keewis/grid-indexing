@@ -70,7 +70,7 @@ jobs:
           pushd $CONDA_PREFIX
           echo "PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)" >> $GITHUB_ENV
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            echo "DYLD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
+            echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
           else
             echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
           fi
