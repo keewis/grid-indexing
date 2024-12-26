@@ -68,11 +68,6 @@ impl Index {
     }
 
     pub fn overlaps(&self, cells: &PolygonArray) -> Vec<Vec<usize>> {
-        // steps
-        // 1. for each polygon, compute (cached) envelopes
-        // 2. query the tree using the envelopes
-        // 3. filter using the geo predicates
-        // 4. assemble into a sparse array
         cells
             .iter()
             .flatten()
