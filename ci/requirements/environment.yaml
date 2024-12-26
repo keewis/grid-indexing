@@ -10,5 +10,6 @@ dependencies:
   - shapely
   - numpy
   - sparse>=0.15
+  - geoarrow-rust-core
   - pytest
   - pytest-cov
