@@ -57,7 +57,7 @@ impl Index {
         }
     }
 
-    fn query_overlaps_one(&self, cell: Polygon) -> Vec<usize> {
+    fn overlaps_one(&self, cell: Polygon) -> Vec<usize> {
         let bbox = cell.envelope();
 
         self.tree
@@ -71,7 +71,7 @@ impl Index {
         cells
             .iter()
             .flatten()
-            .map(|cell| self.query_overlaps_one(cell.to_geo()))
+            .map(|cell| self.overlaps_one(cell.to_geo()))
             .collect()
     }
 }
