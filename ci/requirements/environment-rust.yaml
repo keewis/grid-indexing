@@ -1,4 +1,7 @@
 channels:
   - conda-forge
 dependencies:
-  - rust >=1.83
+  - proj
+  - pkg-config
+  - openssl
+  - xz

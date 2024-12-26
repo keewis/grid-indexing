@@ -56,15 +56,12 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: rust-tests
+          environment-file: ci/requirements/environment-rust.yaml
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
-            rust
+            rust >= 1.83
             python=${{ matrix.python-version }}
-            proj
-            pkg-config
-            openssl
-            xz
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
 
