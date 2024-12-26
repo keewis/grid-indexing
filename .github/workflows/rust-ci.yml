@@ -74,7 +74,7 @@ jobs:
           else
             echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
           fi
-
+          echo "CPATH=$(readlink -f include)" >> $GITHUB_ENV
 
           echo "PYO3_PYTHON=$(readlink -f bin/python)" >> $GITHUB_ENV
           popd
