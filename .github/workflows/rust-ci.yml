@@ -56,18 +56,38 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: rust-tests
+          environment-file: ci/requirements/environment-rust.yaml
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
-            rust
+            rust>=1.83
             python=${{ matrix.python-version }}
-            proj
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
+
+      - name: Help finding installed libraries
+        run: |
+          pushd $CONDA_PREFIX
+          echo "PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)" >> $GITHUB_ENV
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
+          else
+            echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
+          fi
+
+
+          echo "PYO3_PYTHON=$(readlink -f bin/python)" >> $GITHUB_ENV
+          popd
+
       - name: Run tests
         run: |
           cargo build --tests --keep-going
           cargo test --no-fail-fast
+
+      - name: Cleanup
+        run: |
+          unset LD_LIBRARY_PATH
+          unset DYLD_LIBRARY_PATH
 
   lint:
     name: Lint
@@ -91,11 +111,11 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: rust-tests
+          environment-file: ci/requirements/environment-rust.yaml
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
-            rust
-            proj
+            rust>=1.83
             python=${{ matrix.python-version }}
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2

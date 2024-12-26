@@ -1,4 +1,4 @@
-name: CI
+name: python CI
 on:
   push:
     branches:
@@ -38,7 +38,6 @@ jobs:
     if: needs.detect-ci-trigger.outputs.triggered == 'false'
     env:
       FORCE_COLOR: 3
-      CONDA_ENV_FILE: "ci/requirements/environment.yaml"
     defaults:
       run:
         shell: bash -l {0}
@@ -64,8 +63,10 @@ jobs:
 
       - name: Help finding installed libraries
         run: |
-          echo "PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig" >> "$GITHUB_ENV"
-          echo "LD_LIBRARY_PATH=$CONDA_PREFIX/lib" >> "$GITHUB_ENV"
+          pushd $CONDA_PREFIX
+          echo "PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
+          popd
 
       - name: Install the package
         run: |
