@@ -1,14 +1,16 @@
 import cf_xarray  # noqa: F401
 import numpy as np
+import xarray as xr
+from numpy.typing import ArrayLike
 
 
-def is_meshgrid(coord1, coord2):
+def is_meshgrid(coord1: ArrayLike, coord2: ArrayLike):
     return (
         np.all(coord1[0, :] == coord1[1, :]) and np.all(coord2[:, 0] == coord2[:, 1])
     ) or (np.all(coord1[:, 0] == coord1[:, 1]) and np.all(coord2[0, :] == coord2[1, :]))
 
 
-def infer_grid_type(ds):
+def infer_grid_type(ds: xr.Dataset):
     # grid types (all geographic):
     # - 2d crs (affine transform)
     # - 1d orthogonal (rectilinear)
