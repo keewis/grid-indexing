@@ -132,9 +132,21 @@ class TestInferGridType:
 
 
 class TestInferCellGeometries:
-    def test_crs_not_supported(self):
-        ds = example_dataset("2d-crs")
-        with pytest.raises(NotImplementedError, match="geotransform"):
+    @pytest.mark.parametrize(
+        ["grid_type", "error", "pattern"],
+        (
+            pytest.param("2d-crs", NotImplementedError, "geotransform", id="2d-crs"),
+            pytest.param(
+                "1d-unstructured",
+                ValueError,
+                "unstructured grids",
+                id="1d-unstructured",
+            ),
+        ),
+    )
+    def test_not_supported(self, grid_type, error, pattern):
+        ds = example_dataset(grid_type)
+        with pytest.raises(error, match=pattern):
             grids.infer_cell_geometries(ds)
 
     def test_infer_coords(self):

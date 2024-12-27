@@ -59,6 +59,7 @@ def infer_cell_geometries(
     grid_type: str = "infer",
     coords: Literal["infer"] | list[str] = "infer",
 ):
+    # TODO: short-circuit for existing geometries
     if grid_type == "infer":
         grid_type = infer_grid_type(ds)
 
@@ -66,6 +67,12 @@ def infer_cell_geometries(
         raise NotImplementedError(
             "inferring cell geometries is not yet implemented"
             " for geotransform-based grids"
+        )
+    elif grid_type == "1d-unstructured":
+        raise ValueError(
+            "inferring cell geometries is not implemented for unstructured grids."
+            " This is hard to get right in all cases, so please manually"
+            " create the geometries."
         )
 
     if coords == "infer":
