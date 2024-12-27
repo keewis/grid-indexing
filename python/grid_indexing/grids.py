@@ -1,14 +1,19 @@
+from typing import Literal
+
 import cf_xarray  # noqa: F401
 import numpy as np
+import shapely
+import xarray as xr
+from numpy.typing import ArrayLike
 
 
-def is_meshgrid(coord1, coord2):
+def is_meshgrid(coord1: ArrayLike, coord2: ArrayLike):
     return (
         np.all(coord1[0, :] == coord1[1, :]) and np.all(coord2[:, 0] == coord2[:, 1])
     ) or (np.all(coord1[:, 0] == coord1[:, 1]) and np.all(coord2[0, :] == coord2[1, :]))
 
 
-def infer_grid_type(ds):
+def infer_grid_type(ds: xr.Dataset):
     # grid types (all geographic):
     # - 2d crs (affine transform)
     # - 1d orthogonal (rectilinear)
@@ -46,3 +51,52 @@ def infer_grid_type(ds):
             return "2d-curvilinear"
     else:
         raise ValueError("unable to infer the grid type")
+
+
+def infer_cell_geometries(
+    ds: xr.Dataset,
+    *,
+    grid_type: str = "infer",
+    coords: Literal["infer"] | list[str] = "infer",
+):
+    # TODO: short-circuit for existing geometries
+    if grid_type == "infer":
+        grid_type = infer_grid_type(ds)
+
+    if grid_type == "2d-crs":
+        raise NotImplementedError(
+            "inferring cell geometries is not yet implemented"
+            " for geotransform-based grids"
+        )
+    elif grid_type == "1d-unstructured":
+        raise ValueError(
+            "inferring cell geometries is not implemented for unstructured grids."
+            " This is hard to get right in all cases, so please manually"
+            " create the geometries."
+        )
+
+    if coords == "infer":
+        coords = ["longitude", "latitude"]
+        if any(coord not in ds.cf.coordinates for coord in coords):
+            raise ValueError(
+                "cannot infer geographic coordinates. Please add them"
+                " or explicitly pass the names if they exist."
+            )
+
+    coords_only = ds.cf[coords]
+    if grid_type == "1d-rectilinear":
+        coord_names = [ds.cf.coordinates[name][0] for name in coords]
+        [broadcasted] = xr.broadcast(
+            coords_only.drop_indexes(coord_names).reset_coords(coord_names)
+        )
+        coords_only = broadcasted.set_coords(coord_names)
+
+    if any(coord not in coords_only.cf.bounds for coord in coords):
+        with_bounds = coords_only.cf.add_bounds(coords)
+    else:
+        with_bounds = coords_only
+
+    bound_names = [with_bounds.cf.bounds[name][0] for name in coords]
+    boundaries = np.stack([with_bounds.variables[n].data for n in bound_names], axis=-1)
+
+    return shapely.polygons(boundaries)
