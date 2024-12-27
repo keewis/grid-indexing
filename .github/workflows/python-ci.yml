@@ -51,6 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
@@ -67,6 +70,11 @@ jobs:
           echo "PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
           popd
+
+          if [[ -z "$CONDA_PREFIX" ]]; then
+            echo "CONDA_PREFIX is unset!"
+            exit 1
+          fi
 
       - name: Install the package
         run: |
