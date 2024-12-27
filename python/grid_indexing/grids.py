@@ -2,8 +2,10 @@ import cf_xarray  # noqa: F401
 import numpy as np
 
 
-def is_meshgrid(coord):
-    return np.all(coord[0, :] == coord[1, :]) or np.all(coord[:, 0] == coord[:, 1])
+def is_meshgrid(coord1, coord2):
+    return (
+        np.all(coord1[0, :] == coord1[1, :]) and np.all(coord2[:, 0] == coord2[:, 1])
+    ) or (np.all(coord1[:, 0] == coord1[:, 1]) and np.all(coord2[0, :] == coord2[1, :]))
 
 
 def infer_grid_type(ds):
@@ -36,7 +38,7 @@ def infer_grid_type(ds):
         longitude.dims == latitude.dims
     ):
         # can be unstructured, rectilinear or curvilinear
-        if is_meshgrid(longitude.data) and is_meshgrid(latitude.data):
+        if is_meshgrid(longitude.data, latitude.data):
             return "2d-rectilinear"
         else:
             # must be curvilinear (this is not entirely accurate, but
