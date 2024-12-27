@@ -52,6 +52,7 @@ repos:
     rev: v1.28.4
     hooks:
       - id: typos
+        exclude: ".*\\.ipynb$"
   - repo: local
     hooks:
       - id: cargo-fmt
