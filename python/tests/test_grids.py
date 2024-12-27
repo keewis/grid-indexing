@@ -88,3 +88,15 @@ class TestInferGridType:
 
         with pytest.raises(ValueError, match="unable to infer the grid type"):
             grids.infer_grid_type(ds)
+
+
+class TestInferCellGeometries:
+    def test_crs_not_supported(self):
+        ds = example_dataset("2d-crs")
+        with pytest.raises(NotImplementedError, match="geotransform"):
+            grids.infer_cell_geometries(ds)
+
+    def test_infer_coords(self):
+        ds = xr.Dataset()
+        with pytest.raises(ValueError, match="cannot infer geographic coordinates"):
+            grids.infer_cell_geometries(ds, grid_type="2d-rectilinear")

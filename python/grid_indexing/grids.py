@@ -1,3 +1,5 @@
+from typing import Literal
+
 import cf_xarray  # noqa: F401
 import numpy as np
 import xarray as xr
@@ -48,3 +50,30 @@ def infer_grid_type(ds: xr.Dataset):
             return "2d-curvilinear"
     else:
         raise ValueError("unable to infer the grid type")
+
+
+def infer_cell_geometries(
+    ds: xr.Dataset,
+    *,
+    grid_type: str = "infer",
+    coords: Literal["infer"] | list[str] = "infer",
+):
+    if grid_type == "infer":
+        grid_type = infer_grid_type(ds)
+
+    if grid_type == "2d-crs":
+        raise NotImplementedError(
+            "inferring cell geometries is not yet implemented"
+            " for geotransform-based grids"
+        )
+
+    if coords == "infer":
+        coords = ["longitude", "latitude"]
+        if any(coord not in ds.cf.coordinates for coord in coords):
+            raise ValueError(
+                "cannot infer geographic coordinates. Please add them"
+                " or explicitly pass the names if they exist."
+            )
+
+    with_bounds = ds.cf.add_bounds(coords)
+    return with_bounds
