@@ -21,8 +21,8 @@ def example_dataset(grid_type):
             lon = xr.Variable(["y", "x"], lon_, {"standard_name": "longitude"})
             ds = xr.Dataset(coords={"lat": lat, "lon": lon})
         case "2d-curvilinear":
-            lat_ = np.array([[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]])
-            lon_ = np.array([[0, 1, 2, 3], [1, 2, 3, 4], [2, 3, 4, 5]])
+            lat_ = np.array([[0, 0, 0], [2, 2, 2]])
+            lon_ = np.array([[0, 2, 4], [2, 4, 6]])
 
             lat = xr.Variable(["y", "x"], lat_, {"standard_name": "latitude"})
             lon = xr.Variable(["y", "x"], lon_, {"standard_name": "longitude"})
@@ -92,7 +92,20 @@ def example_geometries(grid_type):
                 ]
             )
         case "2d-curvilinear":
-            pass
+            boundaries = np.array(
+                [
+                    [
+                        [[-2, -1], [0, -1], [2, 1], [0, 1]],
+                        [[0, -1], [2, -1], [4, 1], [2, 1]],
+                        [[2, -1], [4, -1], [6, 1], [4, 1]],
+                    ],
+                    [
+                        [[0, 1], [2, 1], [4, 3], [2, 3]],
+                        [[2, 1], [4, 1], [6, 3], [4, 3]],
+                        [[4, 1], [6, 1], [8, 3], [6, 3]],
+                    ],
+                ]
+            )
 
     return shapely.polygons(boundaries)
 
@@ -161,9 +174,7 @@ class TestInferCellGeometries:
         [
             "1d-rectilinear",
             "2d-rectilinear",
-            pytest.param(
-                "2d-curvilinear", marks=pytest.mark.xfail(reason="not yet implemented")
-            ),
+            "2d-curvilinear",
             pytest.param(
                 "1d-unstructured", marks=pytest.mark.xfail(reason="not yet implemented")
             ),
