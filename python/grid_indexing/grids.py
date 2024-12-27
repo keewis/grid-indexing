@@ -22,7 +22,7 @@ def as_components(boundaries):
     geom_offsets = np.arange(np.prod(vertices.shape[:-2]) + 1, dtype="int32")
     ring_offsets = geom_offsets * coords_per_pixel
 
-    return coords, geom_offsets, ring_offsets
+    return coords.astype("float64"), geom_offsets, ring_offsets
 
 
 def infer_grid_type(ds: xr.Dataset):
