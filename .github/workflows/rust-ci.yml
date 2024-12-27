@@ -94,6 +94,10 @@ jobs:
           echo "env:"
           env
 
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
+          fi
+
       - name: Run tests
         run: |
           cargo build --tests --keep-going
