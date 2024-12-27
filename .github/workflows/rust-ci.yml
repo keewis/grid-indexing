@@ -82,6 +82,7 @@ jobs:
           fi
 
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            mkdir -p target/debug/deps
             ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
             ls -l target/debug/deps
             ls -l $CONDA_PREFIX/lib
