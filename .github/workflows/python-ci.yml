@@ -68,6 +68,9 @@ jobs:
           create-args: >-
             python=${{matrix.python-version}}
 
+      - name: Create rust cache
+        uses: Swatinem/rust-cache@v2
+
       - name: Help finding installed libraries
         run: |
           pushd $CONDA_PREFIX
