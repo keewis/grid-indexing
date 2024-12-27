@@ -10,15 +10,13 @@ from grid_indexing import grids
 def example_dataset(grid_type):
     match grid_type:
         case "1d-rectilinear":
-            lat = xr.Variable(
-                "lat", np.linspace(-10, 10, 3), {"standard_name": "latitude"}
-            )
-            lon = xr.Variable(
-                "lon", np.linspace(-5, 5, 4), {"standard_name": "longitude"}
-            )
+            lat_ = np.array([0, 2])
+            lon_ = np.array([0, 2, 4])
+            lat = xr.Variable("lat", lat_, {"standard_name": "latitude"})
+            lon = xr.Variable("lon", lon_, {"standard_name": "longitude"})
             ds = xr.Dataset(coords={"lat": lat, "lon": lon})
         case "2d-rectilinear":
-            lat_, lon_ = np.meshgrid(np.linspace(-10, 10, 3), np.linspace(-5, 5, 4))
+            lat_, lon_ = np.meshgrid(np.array([0, 2]), np.array([0, 2, 4]))
             lat = xr.Variable(["y", "x"], lat_, {"standard_name": "latitude"})
             lon = xr.Variable(["y", "x"], lon_, {"standard_name": "longitude"})
             ds = xr.Dataset(coords={"lat": lat, "lon": lon})
@@ -30,12 +28,10 @@ def example_dataset(grid_type):
             lon = xr.Variable(["y", "x"], lon_, {"standard_name": "longitude"})
             ds = xr.Dataset(coords={"lat": lat, "lon": lon})
         case "1d-unstructured":
-            lat = xr.Variable(
-                "cells", np.linspace(-10, 10, 12), {"standard_name": "latitude"}
-            )
-            lon = xr.Variable(
-                "cells", np.linspace(-5, 5, 12), {"standard_name": "longitude"}
-            )
+            lat_ = np.arange(12)
+            lon_ = np.arange(-5, 7)
+            lat = xr.Variable("cells", lat_, {"standard_name": "latitude"})
+            lon = xr.Variable("cells", lon_, {"standard_name": "longitude"})
             ds = xr.Dataset(coords={"lat": lat, "lon": lon})
         case "2d-crs":
             data = np.linspace(-10, 10, 12).reshape(3, 4)
@@ -56,41 +52,47 @@ def example_dataset(grid_type):
     return ds
 
 
-def example_geometries(ds, grid_type):
+def example_geometries(grid_type):
     if grid_type == "2d-crs":
         raise NotImplementedError
 
-    lon = ds["lon"].data
-    lat = ds["lat"].data
-
     match grid_type:
         case "1d-rectilinear":
-            lat_step = abs(lat[1] - lat[0]) / 2
-            lon_step = abs(lon[1] - lon[0]) / 2
-            lat_, lon_ = np.meshgrid(lat, lon)
-
-            left = lon_ - lon_step
-            right = lon_ + lon_step
-            bottom = lat_ - lat_step
-            top = lat_ + lat_step
-
-            boundaries_ = np.array(
-                [[left, bottom], [left, top], [right, top], [right, bottom]]
+            boundaries = np.array(
+                [
+                    [
+                        [[-1, -1], [-1, 1], [1, 1], [1, -1]],
+                        [[-1, 1], [-1, 3], [1, 3], [1, 1]],
+                    ],
+                    [
+                        [[1, -1], [1, 1], [3, 1], [3, -1]],
+                        [[1, 1], [1, 3], [3, 3], [3, 1]],
+                    ],
+                    [
+                        [[3, -1], [3, 1], [5, 1], [5, -1]],
+                        [[3, 1], [3, 3], [5, 3], [5, 1]],
+                    ],
+                ]
             )
-            boundaries = np.moveaxis(boundaries_, (0, 1), (-2, -1))
         case "2d-rectilinear":
-            lat_step = abs(lat[0, 0] - lat[0, 1]) / 2
-            lon_step = abs(lon[0, 0] - lon[1, 0]) / 2
-
-            left = lon - lon_step
-            right = lon + lon_step
-            bottom = lat - lat_step
-            top = lat + lat_step
-
-            boundaries_ = np.array(
-                [[left, bottom], [left, top], [right, top], [right, bottom]]
+            boundaries = np.array(
+                [
+                    [
+                        [[-1, -1], [-1, 1], [1, 1], [1, -1]],
+                        [[-1, 1], [-1, 3], [1, 3], [1, 1]],
+                    ],
+                    [
+                        [[1, -1], [1, 1], [3, 1], [3, -1]],
+                        [[1, 1], [1, 3], [3, 3], [3, 1]],
+                    ],
+                    [
+                        [[3, -1], [3, 1], [5, 1], [5, -1]],
+                        [[3, 1], [3, 3], [5, 3], [5, 1]],
+                    ],
+                ]
             )
-            boundaries = np.moveaxis(boundaries_, (0, 1), (-2, -1))
+        case "2d-curvilinear":
+            pass
 
     return shapely.polygons(boundaries)
 
@@ -172,7 +174,7 @@ class TestInferCellGeometries:
     )
     def test_infer_geoms(self, grid_type):
         ds = example_dataset(grid_type)
-        expected = example_geometries(ds, grid_type)
+        expected = example_geometries(grid_type)
 
         actual = grids.infer_cell_geometries(ds, grid_type=grid_type)
 
