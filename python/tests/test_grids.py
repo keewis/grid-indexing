@@ -1,5 +1,7 @@
 import numpy as np
 import pytest
+import shapely
+import shapely.testing
 import xarray as xr
 
 from grid_indexing import grids
@@ -54,6 +56,45 @@ def example_dataset(grid_type):
     return ds
 
 
+def example_geometries(ds, grid_type):
+    if grid_type == "2d-crs":
+        raise NotImplementedError
+
+    lon = ds["lon"].data
+    lat = ds["lat"].data
+
+    match grid_type:
+        case "1d-rectilinear":
+            lat_step = abs(lat[1] - lat[0]) / 2
+            lon_step = abs(lon[1] - lon[0]) / 2
+            lat_, lon_ = np.meshgrid(lat, lon)
+
+            left = lon_ - lon_step
+            right = lon_ + lon_step
+            bottom = lat_ - lat_step
+            top = lat_ + lat_step
+
+            boundaries_ = np.array(
+                [[left, bottom], [left, top], [right, top], [right, bottom]]
+            )
+            boundaries = np.moveaxis(boundaries_, (0, 1), (-2, -1))
+        case "2d-rectilinear":
+            lat_step = abs(lat[0, 0] - lat[0, 1]) / 2
+            lon_step = abs(lon[0, 0] - lon[1, 0]) / 2
+
+            left = lon - lon_step
+            right = lon + lon_step
+            bottom = lat - lat_step
+            top = lat + lat_step
+
+            boundaries_ = np.array(
+                [[left, bottom], [left, top], [right, top], [right, bottom]]
+            )
+            boundaries = np.moveaxis(boundaries_, (0, 1), (-2, -1))
+
+    return shapely.polygons(boundaries)
+
+
 class TestInferGridType:
     @pytest.mark.parametrize(
         "grid_type",
@@ -100,3 +141,27 @@ class TestInferCellGeometries:
         ds = xr.Dataset()
         with pytest.raises(ValueError, match="cannot infer geographic coordinates"):
             grids.infer_cell_geometries(ds, grid_type="2d-rectilinear")
+
+    @pytest.mark.parametrize(
+        "grid_type",
+        [
+            "1d-rectilinear",
+            "2d-rectilinear",
+            pytest.param(
+                "2d-curvilinear", marks=pytest.mark.xfail(reason="not yet implemented")
+            ),
+            pytest.param(
+                "1d-unstructured", marks=pytest.mark.xfail(reason="not yet implemented")
+            ),
+            pytest.param(
+                "2d-crs", marks=pytest.mark.xfail(reason="not yet implemented")
+            ),
+        ],
+    )
+    def test_infer_geoms(self, grid_type):
+        ds = example_dataset(grid_type)
+        expected = example_geometries(ds, grid_type)
+
+        actual = grids.infer_cell_geometries(ds, grid_type=grid_type)
+
+        shapely.testing.assert_geometries_equal(actual, expected)

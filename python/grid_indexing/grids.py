@@ -2,6 +2,7 @@ from typing import Literal
 
 import cf_xarray  # noqa: F401
 import numpy as np
+import shapely
 import xarray as xr
 from numpy.typing import ArrayLike
 
@@ -75,5 +76,20 @@ def infer_cell_geometries(
                 " or explicitly pass the names if they exist."
             )
 
-    with_bounds = ds.cf.add_bounds(coords)
-    return with_bounds
+    coords_only = ds.cf[coords]
+    if grid_type == "1d-rectilinear":
+        coord_names = [ds.cf.coordinates[name][0] for name in coords]
+        [broadcasted] = xr.broadcast(
+            coords_only.drop_indexes(coord_names).reset_coords(coord_names)
+        )
+        coords_only = broadcasted.set_coords(coord_names)
+
+    if any(coord not in coords_only.cf.bounds for coord in coords):
+        with_bounds = coords_only.cf.add_bounds(coords)
+    else:
+        with_bounds = coords_only
+
+    bound_names = [with_bounds.cf.bounds[name][0] for name in coords]
+    boundaries = np.stack([with_bounds.variables[n].data for n in bound_names], axis=-1)
+
+    return shapely.polygons(boundaries)
