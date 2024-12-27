@@ -52,6 +52,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
@@ -60,11 +64,9 @@ jobs:
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
-            rust>=1.83
             python=${{ matrix.python-version }}
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
-
       - name: Help finding installed libraries
         run: |
           pushd $CONDA_PREFIX
@@ -120,6 +122,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
@@ -128,10 +136,11 @@ jobs:
           cache-environment: true
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
-            rust>=1.83
             python=${{ matrix.python-version }}
+
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
+
       - name: Cargo clippy
         run: |
           cargo clippy --tests -- -D warnings
