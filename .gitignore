@@ -71,5 +71,9 @@ docs/_build/
 # Pyenv
 .python-version
 
+# jupyter
+.virtual_documents/
+.ipynb_checkpoints/
+
 # data files
 *.nc
