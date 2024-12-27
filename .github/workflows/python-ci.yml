@@ -78,7 +78,7 @@ jobs:
 
       - name: Install the package
         run: |
-          python -m pip install --no-deps -e .
+          maturin develop
 
       - name: Check imports
         run: |
