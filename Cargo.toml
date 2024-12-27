@@ -9,7 +9,6 @@ name = "grid_indexing"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow-buffer = "53.3.0"
 geo = { version = "0.29.3", features = [
   "multithreading",
   "use-proj",
