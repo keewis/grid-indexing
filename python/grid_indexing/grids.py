@@ -6,8 +6,8 @@ def is_meshgrid(coord):
     return np.all(coord[0, :] == coord[1, :]) or np.all(coord[:, 0] == coord[:, 1])
 
 
-def infer_grid_type(ds, coords=None):
-    # grid types:
+def infer_grid_type(ds):
+    # grid types (all geographic):
     # - 2d crs (affine transform)
     # - 1d orthogonal (rectilinear)
     # - 2d orthogonal (rectilinear)
@@ -15,14 +15,14 @@ def infer_grid_type(ds, coords=None):
     # - "unstructured" 1d
     # - "unstructured" n-d
     #
-    # Needs to inspect values (except for 2d crs), so must allow computing (so
-    # calling `infer_grid_type` should be avoided if possible)
+    # Needs to inspect values (except for 1d and 2d crs), so must allow
+    # computing (so calling `infer_grid_type` should be avoided if possible)
     if "crs" in ds.coords and "affine_transform" in ds["crs"].attrs:
         return "2d-crs"
 
     if "longitude" not in ds.cf or "latitude" not in ds.cf:
         # projected coords or no spatial coords. Raise for now
-        raise ValueError("cannot infer the grid type without geographical coordinates")
+        raise ValueError("cannot infer the grid type without geographic coordinates")
 
     longitude = ds.cf["longitude"]
     latitude = ds.cf["latitude"]
@@ -40,7 +40,7 @@ def infer_grid_type(ds, coords=None):
             return "2d-rectilinear"
         else:
             # must be curvilinear (this is not entirely accurate, but
-            # "n-d-unstructured" is really hard to check)
+            # "nd-unstructured" is really hard to check)
             return "2d-curvilinear"
     else:
         raise ValueError("unable to infer the grid type")

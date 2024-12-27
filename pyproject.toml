@@ -78,3 +78,8 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING"]
+
+[tool.typos.default]
+extend-ignore-words-re = [
+  "nd",
+]
