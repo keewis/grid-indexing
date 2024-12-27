@@ -1,3 +1,4 @@
+import geoarrow.rust.core as geoarrow
 import numpy as np
 import pytest
 import shapely
@@ -186,4 +187,5 @@ class TestInferCellGeometries:
 
         actual = grids.infer_cell_geometries(ds, grid_type=grid_type)
 
-        shapely.testing.assert_geometries_equal(actual, expected)
+        actual_geoms = np.reshape(geoarrow.to_shapely(actual), expected.shape)
+        shapely.testing.assert_geometries_equal(actual_geoms, expected)

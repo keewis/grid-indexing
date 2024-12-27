@@ -1,8 +1,8 @@
 from typing import Literal
 
 import cf_xarray  # noqa: F401
+import geoarrow.rust.core as geoarrow
 import numpy as np
-import shapely
 import xarray as xr
 from numpy.typing import ArrayLike
 
@@ -11,6 +11,18 @@ def is_meshgrid(coord1: ArrayLike, coord2: ArrayLike):
     return (
         np.all(coord1[0, :] == coord1[1, :]) and np.all(coord2[:, 0] == coord2[:, 1])
     ) or (np.all(coord1[:, 0] == coord1[:, 1]) and np.all(coord2[0, :] == coord2[1, :]))
+
+
+def as_components(boundaries):
+    vertices = np.concatenate([boundaries, boundaries[..., :1, :]], axis=-2)
+
+    coords = np.reshape(vertices, (-1, 2))
+
+    coords_per_pixel = vertices.shape[-2]
+    geom_offsets = np.arange(np.prod(vertices.shape[:-2]) + 1, dtype="int32")
+    ring_offsets = geom_offsets * coords_per_pixel
+
+    return coords, geom_offsets, ring_offsets
 
 
 def infer_grid_type(ds: xr.Dataset):
@@ -99,4 +111,4 @@ def infer_cell_geometries(
     bound_names = [with_bounds.cf.bounds[name][0] for name in coords]
     boundaries = np.stack([with_bounds.variables[n].data for n in bound_names], axis=-1)
 
-    return shapely.polygons(boundaries)
+    return geoarrow.polygons(*as_components(boundaries), crs=4326)
