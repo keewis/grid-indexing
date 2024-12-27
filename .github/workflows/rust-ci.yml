@@ -76,6 +76,15 @@ jobs:
           export PYO3_PYTHON=$(readlink -f bin/python)
           popd
 
+          if [[ -z "$CONDA_PREFIX" ]]; then
+            echo "conda prefix is unset!";
+            exit 1
+          fi
+
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
+          fi
+
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "CPATH=$CPATH" >> $GITHUB_ENV
@@ -93,10 +102,6 @@ jobs:
           echo "---"
           echo "env:"
           env
-
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
-          fi
 
       - name: Run tests
         run: |
