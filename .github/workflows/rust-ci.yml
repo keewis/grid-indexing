@@ -77,12 +77,14 @@ jobs:
           popd
 
           if [[ -z "$CONDA_PREFIX" ]]; then
-            echo "conda prefix is unset!";
+            echo "CONDA_PREFIX is unset!";
             exit 1
           fi
 
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
+            ls -l target/debug/deps
+            ls -l $CONDA_PREFIX/lib
           fi
 
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
