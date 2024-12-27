@@ -19,7 +19,7 @@ def infer_grid_type(ds):
     #
     # Needs to inspect values (except for 1d and 2d crs), so must allow
     # computing (so calling `infer_grid_type` should be avoided if possible)
-    if "crs" in ds.coords and "affine_transform" in ds["crs"].attrs:
+    if ds.cf.grid_mapping_names and "GeoTransform" in ds.cf["grid_mapping"].attrs:
         return "2d-crs"
 
     if "longitude" not in ds.cf or "latitude" not in ds.cf:

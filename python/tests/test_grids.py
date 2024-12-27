@@ -48,7 +48,25 @@ class TestInferGridType:
         assert actual == "1d-unstructured"
 
     def test_crs_2d(self):
-        pass
+        data = np.linspace(-10, 10, 12).reshape(3, 4)
+        geo_transform = "101985.0 300.0379266750948 0.0 2826915.0 0.0 -300.041782729805"
+
+        ds = xr.Dataset(
+            {"band_data": (["y", "x"], data)},
+            coords={
+                "spatial_ref": (
+                    (),
+                    np.array(0),
+                    {
+                        "grid_mapping_name": "transverse_mercator",
+                        "GeoTransform": geo_transform,
+                    },
+                )
+            },
+        )
+
+        actual = grids.infer_grid_type(ds)
+        assert actual == "2d-crs"
 
     def test_missing_spatial_coordinates(self):
         ds = xr.Dataset()
