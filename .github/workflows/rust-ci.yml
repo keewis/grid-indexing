@@ -39,7 +39,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        os:
+          - "ubuntu-latest"
+          # building proj-sys on windows appears to not really be possible
+          # - "windows-latest"
+          - "macos-latest"
         python-version: ["3.10", "3.12", "3.13"]
 
     env:
@@ -110,11 +114,6 @@ jobs:
         run: |
           cargo build --tests --keep-going
           cargo test --no-fail-fast
-
-      - name: Cleanup
-        run: |
-          unset LD_LIBRARY_PATH
-          unset DYLD_LIBRARY_PATH
 
   lint:
     name: Lint
