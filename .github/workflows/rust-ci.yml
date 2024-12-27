@@ -77,7 +77,7 @@ jobs:
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "CPATH=$CPATH" >> $GITHUB_ENV
-          echo "PYO3_PYTHON=$(readlink -f bin/python)" >> $GITHUB_ENV
+          echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
           echo >> .cargo/config.toml
           echo "[env]" >> .cargo/config.toml
