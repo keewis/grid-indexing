@@ -11,6 +11,12 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+dependencies = [
+  "sparse>=0.15",
+  "geoarrow-rust-core>=0.4.0b3",
+  "shapely>=2.0",
+  "numpy>=2.0",
+]
 
 [project.optional-dependencies]
 tests = [

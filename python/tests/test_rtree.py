@@ -1,8 +1,9 @@
+import geoarrow.rust.core as geoarrow
 import numpy as np
 import shapely
 import sparse
 
-from grid_indexing import Index, as_parts
+from grid_indexing import Index
 
 
 def create_cells(x, y):
@@ -23,15 +24,23 @@ def create_cells(x, y):
     return shapely.polygons(vertices)
 
 
-def test_create_index():
+def test_create_index_from_shapely():
     x = np.linspace(-10, 10, 6)
     y = np.linspace(40, 60, 4)
 
     cells = create_cells(x, y).flatten()
 
-    type_, coords, (ring_offsets, geom_offsets) = shapely.to_ragged_array(cells)
+    index = Index(geoarrow.from_shapely(cells))
+    assert isinstance(index, Index)
 
-    index = Index(coords, geom_offsets, ring_offsets)
+
+def test_create_index_geoarrow():
+    x = np.linspace(-10, 10, 6)
+    y = np.linspace(40, 60, 4)
+
+    cells = create_cells(x, y).flatten()
+
+    index = Index.from_shapely(cells)
     assert isinstance(index, Index)
 
 
@@ -41,9 +50,9 @@ def test_query_overlap():
     ).flatten()
     target_cells = source_cells
 
-    index = Index(*as_parts(source_cells))
+    index = Index.from_shapely(source_cells)
 
-    actual = index.query_overlap(*as_parts(target_cells))
+    actual = index.query_overlap(geoarrow.from_shapely(target_cells))
 
     assert isinstance(actual, sparse.GCXS)
     sum_ = np.sum(actual, axis=1).todense()

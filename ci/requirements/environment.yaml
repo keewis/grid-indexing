@@ -12,3 +12,6 @@ dependencies:
   - sparse>=0.15
   - pytest
   - pytest-cov
+  - pip
+  - pip:
+      - geoarrow-rust-core==0.4.0b3
