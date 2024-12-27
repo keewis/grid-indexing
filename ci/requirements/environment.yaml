@@ -10,6 +10,7 @@ dependencies:
   - shapely
   - numpy
   - sparse>=0.15
+  - cf-xarray
   - pytest
   - pytest-cov
   - pip
