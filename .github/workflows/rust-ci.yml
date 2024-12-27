@@ -81,10 +81,10 @@ jobs:
 
           echo >> .cargo/config.toml
           echo "[env]" >> .cargo/config.toml
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> .cargo/config.toml
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> .cargo/config.toml
-          echo "CPATH=$CPATH" >> .cargo/config.toml
-          echo "PYO3_PYTHON=$PYO3_PYTHON" >> .cargo/config.toml
+          echo "PKG_CONFIG_PATH = '$PKG_CONFIG_PATH'" >> .cargo/config.toml
+          echo "LD_LIBRARY_PATH = '$LD_LIBRARY_PATH'" >> .cargo/config.toml
+          echo "CPATH = '$CPATH'" >> .cargo/config.toml
+          echo "PYO3_PYTHON = '$PYO3_PYTHON'" >> .cargo/config.toml
 
           echo "final cargo config:"
           cat .cargo/config.toml
