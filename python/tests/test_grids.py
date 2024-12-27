@@ -176,9 +176,6 @@ class TestInferCellGeometries:
             "2d-rectilinear",
             "2d-curvilinear",
             pytest.param(
-                "1d-unstructured", marks=pytest.mark.xfail(reason="not yet implemented")
-            ),
-            pytest.param(
                 "2d-crs", marks=pytest.mark.xfail(reason="not yet implemented")
             ),
         ],
