@@ -39,6 +39,7 @@ impl RTreeObject for NumberedCell {
 }
 
 #[pyclass]
+#[pyo3(module = "grid_indexing")]
 pub struct Index {
     tree: RTree<NumberedCell>,
 }
