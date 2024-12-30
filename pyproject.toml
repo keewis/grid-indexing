@@ -17,6 +17,7 @@ dependencies = [
   "shapely>=2.0",
   "numpy>=2.0",
   "cf-xarray>=0.9",
+  "xarray>=2024.11.0",
 ]
 
 [project.optional-dependencies]
