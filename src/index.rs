@@ -8,10 +8,11 @@ use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyType};
 use pyo3_arrow::PyArray;
 use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
+use serde::{Deserialize, Serialize};
 
 use super::trait_::{AsPolygonArray, AsSparse};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NumberedCell {
     index: usize,
     envelope: CachedEnvelope<Polygon>,
@@ -38,6 +39,7 @@ impl RTreeObject for NumberedCell {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 #[pyclass]
 #[pyo3(module = "grid_indexing")]
 pub struct Index {
