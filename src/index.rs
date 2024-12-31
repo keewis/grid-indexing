@@ -1,3 +1,4 @@
+use bincode::{deserialize, serialize};
 use std::ops::Deref;
 
 use geo::{Intersects, Polygon};
@@ -5,7 +6,7 @@ use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
 use pyo3::intern;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyType};
+use pyo3::types::{IntoPyDict, PyBytes, PyType};
 use pyo3_arrow::PyArray;
 use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
 use serde::{Deserialize, Serialize};
@@ -86,6 +87,20 @@ impl Index {
         let polygons = source_cells.into_polygon_array();
 
         polygons.map(Index::create)
+    }
+
+    pub fn __setstate__(&mut self, state: &PyBytes) -> PyResult<()> {
+        // Deserialize the data contained in the PyBytes object
+        // and update the struct with the deserialized values.
+        *self = deserialize(state.as_bytes()).unwrap();
+
+        Ok(())
+    }
+
+    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+        // Serialize the struct and return a PyBytes object
+        // containing the serialized data.
+        Ok(PyBytes::new(py, &serialize(&self).unwrap()))
     }
 
     #[classmethod]
