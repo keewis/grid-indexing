@@ -1,6 +1,15 @@
 from dataclasses import dataclass
 
 import numpy as np
+import shapely
+
+
+def extract_chunk_boundaries(chunks):
+    import dask
+
+    coverage = dask.delayed(shapely.unary_union)
+
+    return list(map(coverage, chunks))
 
 
 @dataclass
