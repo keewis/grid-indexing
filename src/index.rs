@@ -81,6 +81,11 @@ impl Index {
     }
 }
 
+#[pyfunction]
+pub fn create_empty() -> Index {
+    Index { tree: RTree::new() }
+}
+
 #[pymethods]
 impl Index {
     #[new]
@@ -104,6 +109,16 @@ impl Index {
         let serialized = serialize(&self).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
         let bytes = PyBytes::new(py, &serialized);
         Ok(bytes)
+    }
+
+    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject)> {
+        let create = py.import("grid_indexing")?.getattr("create_empty")?;
+        let args = ();
+
+        Ok((
+            create.into_pyobject(py)?.unbind().into_any(),
+            args.into_pyobject(py)?.unbind().into_any(),
+        ))
     }
 
     #[classmethod]
