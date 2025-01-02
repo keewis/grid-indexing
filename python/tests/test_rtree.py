@@ -1,3 +1,5 @@
+import pickle
+
 import geoarrow.rust.core as geoarrow
 import numpy as np
 import shapely
@@ -59,3 +61,19 @@ def test_query_overlap():
     assert np.all(
         np.isin(sum_, np.array([1, 4, 6, 9]))
     ), "unexpected number of cells found"
+
+
+def test_pickle():
+    x = np.linspace(-10, 10, 3)
+    y = np.linspace(-5, 5, 2)
+
+    cells = create_cells(x, y).flatten()
+
+    index = Index.from_shapely(cells)
+
+    dumped = pickle.dumps(index)
+    recreated = pickle.loads(dumped)
+
+    assert isinstance(recreated, Index)
+    # TODO: compare the index
+    # assert index == recreated
