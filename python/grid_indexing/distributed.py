@@ -61,3 +61,60 @@ class ChunkGrid:
         indices = np.unravel_index(flattened_index, self.chunks.shape[:-1])
 
         return np.prod(self.chunks[*indices, :])
+
+
+class DistributedRTree:
+    def __init__(self, grid):
+        import dask
+
+        geoms = grid["geometry"].data
+        self.source_grid = ChunkGrid.from_dask(geoms)
+
+        self.chunks = geoms.to_delayed().flatten()
+        [boundaries] = dask.compute(extract_chunk_boundaries(self.chunks))
+
+        self.chunk_indexes = list(map(dask.delayed(_index_from_shapely), self.chunks))
+        self.index = Index.from_shapely(np.array(boundaries))
+
+    def query_overlap(self, grid):
+        import dask
+        import dask.array as da
+
+        # prepare
+        geoms = grid["geometry"].data
+        target_grid = ChunkGrid.from_dask(geoms)
+        input_chunks = geoms.to_delayed().flatten()
+
+        # query overlapping indices
+        [boundaries] = dask.compute(extract_chunk_boundaries(input_chunks))
+        geoms = ga.from_shapely(np.array(boundaries))
+        overlapping_chunks = self.index.query_overlap(geoms).todense()
+
+        # actual distributed query
+        chunks = np.full_like(overlapping_chunks, dtype=object, fill_value=None)
+        meta = sparse.GCXS.from_coo(sparse.empty((), dtype=bool))
+
+        for target_index, input_chunk in enumerate(input_chunks):
+            for source_index, mask in enumerate(overlapping_chunks[target_index]):
+                func = _query_overlap if mask else _empty_chunk
+                shape = (
+                    target_grid.chunk_size(target_index),
+                    self.source_grid.chunk_size(source_index),
+                )
+
+                task = dask.delayed(func)(
+                    self.chunk_indexes[source_index],
+                    input_chunk,
+                    shape=shape,
+                )
+                chunk = da.from_delayed(task, shape=shape, dtype=bool, meta=meta)
+
+                chunks[target_index, source_index] = chunk
+
+        return da.concatenate(
+            [
+                da.concatenate(chunks[row, :].tolist(), axis=1)
+                for row in range(chunks.shape[0])
+            ],
+            axis=0,
+        )
