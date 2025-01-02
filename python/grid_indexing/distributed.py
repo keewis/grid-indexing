@@ -16,7 +16,7 @@ def extract_chunk_boundaries(chunks):
     return list(map(coverage, chunks))
 
 
-def index_from_shapely(chunk):
+def _index_from_shapely(chunk):
     return Index(ga.from_shapely(chunk.flatten()))
 
 
