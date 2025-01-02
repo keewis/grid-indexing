@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import geoarrow.rust.core as ga
 import numpy as np
 import shapely
+import sparse
 
 from grid_indexing import Index
 
@@ -17,6 +18,20 @@ def extract_chunk_boundaries(chunks):
 
 def index_from_shapely(chunk):
     return Index(ga.from_shapely(chunk.flatten()))
+
+
+def _empty_chunk(index, chunk, shape):
+    arr = sparse.full(shape=shape, fill_value=False, dtype=bool)
+    return sparse.GCXS.from_coo(arr)
+
+
+def _query_overlap(index, chunk, shape):
+    result = index.query_overlap(ga.from_shapely(chunk.flatten()))
+
+    if result.nnz == 0:
+        return _empty_chunk(index, chunk, shape)
+
+    return result
 
 
 @dataclass
