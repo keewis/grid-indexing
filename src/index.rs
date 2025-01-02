@@ -4,6 +4,7 @@ use std::ops::Deref;
 use geo::{Intersects, Polygon};
 use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::intern;
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyType};
@@ -89,18 +90,20 @@ impl Index {
         polygons.map(Index::create)
     }
 
-    pub fn __setstate__(&mut self, state: &PyBytes) -> PyResult<()> {
+    pub fn __setstate__(&mut self, state: &[u8]) -> PyResult<()> {
         // Deserialize the data contained in the PyBytes object
         // and update the struct with the deserialized values.
-        *self = deserialize(state.as_bytes()).unwrap();
+        *self = deserialize(state).map_err(|err| PyRuntimeError::new_err(err.to_string()))?;
 
         Ok(())
     }
 
-    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
+    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
         // Serialize the struct and return a PyBytes object
         // containing the serialized data.
-        Ok(PyBytes::new(py, &serialize(&self).unwrap()))
+        let serialized = serialize(&self).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+        let bytes = PyBytes::new(py, &serialized);
+        Ok(bytes)
     }
 
     #[classmethod]
