@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
+import geoarrow.rust.core as ga
 import numpy as np
 import shapely
+
+from grid_indexing import Index
 
 
 def extract_chunk_boundaries(chunks):
@@ -10,6 +13,10 @@ def extract_chunk_boundaries(chunks):
     coverage = dask.delayed(shapely.unary_union)
 
     return list(map(coverage, chunks))
+
+
+def index_from_shapely(chunk):
+    return Index(ga.from_shapely(chunk.flatten()))
 
 
 @dataclass
