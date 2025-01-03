@@ -24,3 +24,28 @@ class TestChunkGrid:
 
         assert chunk_grid.shape == arr.shape
         np.testing.assert_equal(chunk_grid.chunks, expected_chunks)
+
+    def test_grid_shape(self):
+        shape = (7, 3)
+        chunks = np.array(
+            [
+                [[2, 1], [2, 1], [2, 1]],
+                [[2, 1], [2, 1], [2, 1]],
+                [[2, 1], [2, 1], [2, 1]],
+                [[1, 1], [1, 1], [1, 1]],
+            ]
+        )
+
+        grid = gid.ChunkGrid(shape, chunks)
+        expected = (4, 3)
+
+        assert grid.grid_shape == expected
+
+    @pytest.mark.parametrize(["flattened_index", "expected"], ((0, 12), (3, 9)))
+    def test_chunk_size(self, flattened_index, expected):
+        shape = (7, 6)
+        chunks = np.array([[[4, 3], [4, 3]], [[3, 3], [3, 3]]])
+
+        grid = gid.ChunkGrid(shape, chunks)
+
+        assert grid.chunk_size(flattened_index) == expected
