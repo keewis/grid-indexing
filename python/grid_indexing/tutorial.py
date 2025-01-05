@@ -5,6 +5,7 @@ import xarray as xr
 
 def rectilinear_1d(resolution):
     sizes = {
+        "tiny": (18, 9),
         "small": (180, 90),
         "mid": (1800, 900),
         "large": (7200, 3600),
@@ -27,6 +28,7 @@ def rectilinear_1d(resolution):
 
 def rectilinear_2d(resolution):
     sizes = {
+        "tiny": (18, 9),
         "small": (180, 90),
         "mid": (1800, 900),
         "large": (7200, 3600),
@@ -50,6 +52,7 @@ def rectilinear_2d(resolution):
 
 def curvilinear_2d(resolution):
     sizes = {
+        "tiny": (18, 9),
         "small": (180, 90),
         "mid": (1800, 900),
         "large": (7200, 3600),
