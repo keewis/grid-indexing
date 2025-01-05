@@ -5,7 +5,7 @@ dask = pytest.importorskip("dask")
 import dask.array as da
 import numpy as np
 
-from grid_indexing import distributed as gid
+from grid_indexing.distributed import ChunkGrid
 
 
 class TestChunkGrid:
@@ -20,7 +20,7 @@ class TestChunkGrid:
         ),
     )
     def test_from_dask(self, arr, expected_chunks):
-        chunk_grid = gid.ChunkGrid.from_dask(arr)
+        chunk_grid = ChunkGrid.from_dask(arr)
 
         assert chunk_grid.shape == arr.shape
         np.testing.assert_equal(chunk_grid.chunks, expected_chunks)
@@ -36,7 +36,7 @@ class TestChunkGrid:
             ]
         )
 
-        grid = gid.ChunkGrid(shape, chunks)
+        grid = ChunkGrid(shape, chunks)
         expected = (4, 3)
 
         assert grid.grid_shape == expected
@@ -46,6 +46,6 @@ class TestChunkGrid:
         shape = (7, 6)
         chunks = np.array([[[4, 3], [4, 3]], [[3, 3], [3, 3]]])
 
-        grid = gid.ChunkGrid(shape, chunks)
+        grid = ChunkGrid(shape, chunks)
 
         assert grid.chunk_size(flattened_index) == expected
