@@ -71,24 +71,22 @@ class ChunkGrid:
 
 
 class DistributedRTree:
-    def __init__(self, grid):
+    def __init__(self, geoms):
         import dask
 
-        geoms = grid["geometry"].data
         self.source_grid = ChunkGrid.from_dask(geoms)
 
-        self.chunks = geoms.to_delayed().flatten()
-        [boundaries] = dask.compute(extract_chunk_boundaries(self.chunks))
+        chunks = geoms.to_delayed().flatten()
+        [boundaries] = dask.compute(extract_chunk_boundaries(chunks))
 
-        self.chunk_indexes = list(map(dask.delayed(_index_from_shapely), self.chunks))
+        self.chunk_indexes = list(map(dask.delayed(_index_from_shapely), chunks))
         self.index = Index.from_shapely(np.array(boundaries))
 
-    def query_overlap(self, grid):
+    def query_overlap(self, geoms):
         import dask
         import dask.array as da
 
         # prepare
-        geoms = grid["geometry"].data
         target_grid = ChunkGrid.from_dask(geoms)
         input_chunks = geoms.to_delayed().flatten()
 
