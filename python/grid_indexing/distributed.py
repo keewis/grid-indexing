@@ -9,9 +9,15 @@ from grid_indexing import Index
 
 
 def extract_chunk_boundaries(chunks):
+    def _chunk_boundaries(chunk):
+        union = shapely.unary_union(chunk)
+
+        # TODO: does the minimum rotated rectangle make sense?
+        return shapely.minimum_rotated_rectangle(union)
+
     import dask
 
-    coverage = dask.delayed(shapely.unary_union)
+    coverage = dask.delayed(_chunk_boundaries)
 
     return list(map(coverage, chunks))
 

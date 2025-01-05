@@ -4,8 +4,32 @@ dask = pytest.importorskip("dask")
 
 import dask.array as da
 import numpy as np
+import shapely
+import shapely.testing
 
-from grid_indexing.distributed import ChunkGrid
+from grid_indexing.distributed import ChunkGrid, extract_chunk_boundaries
+
+
+def test_extract_chunk_boundaries():
+    vertices = np.array(
+        [
+            [[0, 0], [0, 1], [1, 1], [1, 0]],
+            [[1, 0], [1, 1], [2, 1], [2, 0]],
+            [[0, 1], [0, 2], [1, 2], [1, 1]],
+            [[1, 1], [1, 2], [2, 2], [2, 1]],
+        ]
+    )
+    geometries = shapely.polygons(vertices)
+
+    arr = da.from_array(geometries, chunks=(2,))
+    chunks = arr.to_delayed().flatten()
+
+    [actual] = dask.compute(extract_chunk_boundaries(chunks))
+    expected = shapely.polygons(
+        np.array([[[0, 0], [0, 1], [2, 1], [2, 0]], [[0, 1], [0, 2], [2, 2], [2, 1]]])
+    )
+
+    shapely.testing.assert_geometries_equal(actual, expected)
 
 
 class TestChunkGrid:
