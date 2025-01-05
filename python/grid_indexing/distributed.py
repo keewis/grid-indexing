@@ -54,8 +54,9 @@ class ChunkGrid:
 
     def __repr__(self):
         name = type(self).__name__
+        grid = self.chunks[..., 0]
 
-        return f"{name}(shape={self.shape}, chunks={np.prod(self.grid_shape)})"
+        return f"{name}(shape={self.shape}, chunks={grid.size})"
 
     def chunk_size(self, flattened_index):
         indices = np.unravel_index(flattened_index, self.chunks.shape[:-1])

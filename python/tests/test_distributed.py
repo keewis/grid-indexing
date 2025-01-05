@@ -49,3 +49,14 @@ class TestChunkGrid:
         grid = ChunkGrid(shape, chunks)
 
         assert grid.chunk_size(flattened_index) == expected
+
+    def test_repr(self):
+        shape = (7, 6)
+        chunks = np.array([[[4, 3], [4, 3]], [[3, 3], [3, 3]]])
+
+        grid = ChunkGrid(shape, chunks)
+
+        actual = repr(grid)
+
+        assert f"shape={shape}" in actual
+        assert "chunks=4" in actual
