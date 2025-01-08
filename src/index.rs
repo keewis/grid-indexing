@@ -111,13 +111,15 @@ impl Index {
         Ok(bytes)
     }
 
-    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject)> {
+    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject, PyObject)> {
         let create = py.import("grid_indexing")?.getattr("create_empty")?;
         let args = ();
+        let state = self.__getstate__(py)?;
 
         Ok((
             create.into_pyobject(py)?.unbind().into_any(),
             args.into_pyobject(py)?.unbind().into_any(),
+            state.into_pyobject(py)?.unbind().into_any(),
         ))
     }
 
