@@ -1,7 +1,7 @@
 use bincode::{deserialize, serialize};
 use std::ops::Deref;
 
-use geo::{Intersects, Polygon};
+use geo::{Polygon, Relate};
 use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
 use pyo3::exceptions::PyRuntimeError;
@@ -67,7 +67,12 @@ impl Index {
 
         self.tree
             .locate_in_envelope_intersecting(&bbox)
-            .filter(|candidate| cell.intersects(candidate.geometry()))
+            .filter(|candidate| {
+                let relate = cell.relate(candidate.geometry());
+                // We're looking for anything that fully covers / is covered by / intersects
+                // (no touching)
+                relate.is_intersects() && !relate.is_touches()
+            })
             .map(|match_| match_.index)
             .collect()
     }
