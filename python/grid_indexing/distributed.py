@@ -8,18 +8,11 @@ import sparse
 from grid_indexing import Index
 
 
-def extract_chunk_boundaries(chunks):
-    def _chunk_boundaries(chunk):
-        union = shapely.unary_union(chunk)
+def _chunk_boundaries(chunk):
+    union = shapely.unary_union(chunk)
 
-        # TODO: does the minimum rotated rectangle make sense?
-        return shapely.minimum_rotated_rectangle(union)
-
-    import dask
-
-    coverage = dask.delayed(_chunk_boundaries)
-
-    return list(map(coverage, chunks))
+    # TODO: does the minimum rotated rectangle make sense?
+    return shapely.minimum_rotated_rectangle(union)
 
 
 def _index_from_shapely(chunk):
@@ -37,49 +30,71 @@ def _query_overlap(index, chunk, shape):
     if result.nnz == 0:
         return _empty_chunk(index, chunk, shape)
 
-    return result
+    return np.reshape(result, shape)
 
 
 @dataclass
-class ChunkGrid:
-    shape: tuple
-    chunks: np.ndarray
+class DelayedGrid:
+    shape: tuple[int, ...]
+    chunksizes: np.ndarray
+
+    delayed: np.ndarray
 
     @classmethod
     def from_dask(cls, arr):
         shape = arr.shape
-        chunksizes = arr.chunks
+        chunksizes = np.stack(np.meshgrid(*arr.chunks, indexing="ij"), axis=-1)
 
-        grid = np.stack(np.meshgrid(*chunksizes), axis=-1)
-
-        return cls(shape, grid)
+        return cls(shape, chunksizes, arr.to_delayed())
 
     @property
     def grid_shape(self):
-        return self.chunks.shape[:-1]
+        return self.delayed.shape
+
+    def __getitem__(self, key):
+        return self.delayed[key]
+
+    def map(self, func, flatten=False):
+        mapped = np.array([func(chunk) for chunk in self.delayed.flatten()])
+
+        result = mapped if flatten else np.reshape(mapped, self.delayed.shape)
+        return type(self)(self.shape, self.chunksizes, result)
+
+    def flat_iter_chunks(self):
+        shape = self.grid_shape
+        size = int(np.prod(shape))
+
+        for flat_index in range(size):
+            indices = tuple(map(int, np.unravel_index(flat_index, shape)))
+            chunk_shape = tuple(map(int, self.chunksizes[*indices, :]))
+
+            yield indices, chunk_shape, self.delayed[indices]
+
+    def compute(self):
+        import dask
+
+        [computed] = dask.compute(self.delayed.flatten().tolist())
+
+        return np.reshape(np.asarray(computed), self.delayed.shape)
 
     def __repr__(self):
         name = type(self).__name__
-        grid = self.chunks[..., 0]
+        grid = self.chunksizes[..., 0]
 
         return f"{name}(shape={self.shape}, chunks={grid.size})"
-
-    def chunk_size(self, flattened_index):
-        indices = np.unravel_index(flattened_index, self.chunks.shape[:-1])
-
-        return np.prod(self.chunks[*indices, :])
 
 
 class DistributedRTree:
     def __init__(self, geoms):
         import dask
 
-        self.source_grid = ChunkGrid.from_dask(geoms)
+        self.source_grid = DelayedGrid.from_dask(geoms)
 
-        chunks = geoms.to_delayed().flatten()
-        [boundaries] = dask.compute(extract_chunk_boundaries(chunks))
+        boundaries = self.source_grid.map(
+            dask.delayed(_chunk_boundaries), flatten=True
+        ).compute()
 
-        self.chunk_indexes = list(map(dask.delayed(_index_from_shapely), chunks))
+        self.chunk_indexes = self.source_grid.map(dask.delayed(_index_from_shapely))
         self.index = Index.from_shapely(np.array(boundaries))
 
     def query_overlap(self, geoms):
@@ -87,39 +102,47 @@ class DistributedRTree:
         import dask.array as da
 
         # prepare
-        target_grid = ChunkGrid.from_dask(geoms)
-        input_chunks = geoms.to_delayed().flatten()
+        target_grid = DelayedGrid.from_dask(geoms)
+        chunk_grid_shape = target_grid.grid_shape + self.source_grid.grid_shape
 
         # query overlapping indices
-        [boundaries] = dask.compute(extract_chunk_boundaries(input_chunks))
+        [boundaries] = dask.compute(
+            target_grid.map(
+                dask.delayed(_chunk_boundaries), flatten=True
+            ).delayed.tolist()
+        )
         geoms = ga.from_shapely(np.array(boundaries))
-        overlapping_chunks = self.index.query_overlap(geoms).todense()
+        query_result = self.index.query_overlap(geoms).todense()
+        overlapping_chunks = np.reshape(query_result, chunk_grid_shape)
 
         # actual distributed query
-        chunks = np.full_like(overlapping_chunks, dtype=object, fill_value=None)
+        output_chunks = np.full(chunk_grid_shape, dtype=object, fill_value=None)
         meta = sparse.GCXS.from_coo(sparse.empty((), dtype=bool))
 
-        for target_index, input_chunk in enumerate(input_chunks):
-            for source_index, mask in enumerate(overlapping_chunks[target_index]):
+        # TODO: maybe use `itertools.product` instead?
+        for (
+            target_indices,
+            target_chunk_shape,
+            target_chunk,
+        ) in target_grid.flat_iter_chunks():
+            for (
+                source_indices,
+                source_chunk_shape,
+                source_chunk,
+            ) in self.source_grid.flat_iter_chunks():
+                indices = target_indices + source_indices
+                mask = overlapping_chunks[indices]
+
                 func = _query_overlap if mask else _empty_chunk
-                shape = (
-                    target_grid.chunk_size(target_index),
-                    self.source_grid.chunk_size(source_index),
-                )
+                chunk_shape = target_chunk_shape + source_chunk_shape
 
                 task = dask.delayed(func)(
-                    self.chunk_indexes[source_index],
-                    input_chunk,
-                    shape=shape,
+                    self.chunk_indexes[source_indices],
+                    target_chunk,
+                    shape=chunk_shape,
                 )
-                chunk = da.from_delayed(task, shape=shape, dtype=bool, meta=meta)
+                chunk = da.from_delayed(task, shape=chunk_shape, dtype=bool, meta=meta)
 
-                chunks[target_index, source_index] = chunk
+                output_chunks[indices] = chunk
 
-        return da.concatenate(
-            [
-                da.concatenate(chunks[row, :].tolist(), axis=1)
-                for row in range(chunks.shape[0])
-            ],
-            axis=0,
-        )
+        return da.block(output_chunks.tolist())
