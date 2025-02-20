@@ -1,17 +1,20 @@
+use bincode::{deserialize, serialize};
 use std::ops::Deref;
 
-use geo::{Intersects, Polygon};
+use geo::{Polygon, Relate};
 use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::intern;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyType};
+use pyo3::types::{IntoPyDict, PyBytes, PyType};
 use pyo3_arrow::PyArray;
 use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
+use serde::{Deserialize, Serialize};
 
 use super::trait_::{AsPolygonArray, AsSparse};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NumberedCell {
     index: usize,
     envelope: CachedEnvelope<Polygon>,
@@ -38,7 +41,9 @@ impl RTreeObject for NumberedCell {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 #[pyclass]
+#[pyo3(module = "grid_indexing")]
 pub struct Index {
     tree: RTree<NumberedCell>,
 }
@@ -62,7 +67,12 @@ impl Index {
 
         self.tree
             .locate_in_envelope_intersecting(&bbox)
-            .filter(|candidate| cell.intersects(candidate.geometry()))
+            .filter(|candidate| {
+                let relate = cell.relate(candidate.geometry());
+                // We're looking for anything that fully covers / is covered by / intersects
+                // (no touching)
+                relate.is_intersects() && !relate.is_touches()
+            })
             .map(|match_| match_.index)
             .collect()
     }
@@ -76,6 +86,11 @@ impl Index {
     }
 }
 
+#[pyfunction]
+pub fn create_empty() -> Index {
+    Index { tree: RTree::new() }
+}
+
 #[pymethods]
 impl Index {
     #[new]
@@ -83,6 +98,34 @@ impl Index {
         let polygons = source_cells.into_polygon_array();
 
         polygons.map(Index::create)
+    }
+
+    pub fn __setstate__(&mut self, state: &[u8]) -> PyResult<()> {
+        // Deserialize the data contained in the PyBytes object
+        // and update the struct with the deserialized values.
+        *self = deserialize(state).map_err(|err| PyRuntimeError::new_err(err.to_string()))?;
+
+        Ok(())
+    }
+
+    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+        // Serialize the struct and return a PyBytes object
+        // containing the serialized data.
+        let serialized = serialize(&self).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+        let bytes = PyBytes::new(py, &serialized);
+        Ok(bytes)
+    }
+
+    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject, PyObject)> {
+        let create = py.import("grid_indexing")?.getattr("create_empty")?;
+        let args = ();
+        let state = self.__getstate__(py)?;
+
+        Ok((
+            create.into_pyobject(py)?.unbind().into_any(),
+            args.into_pyobject(py)?.unbind().into_any(),
+            state.into_pyobject(py)?.unbind().into_any(),
+        ))
     }
 
     #[classmethod]

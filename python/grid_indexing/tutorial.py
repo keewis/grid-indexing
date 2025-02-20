@@ -3,8 +3,15 @@ import pyproj
 import xarray as xr
 
 
+def _bounds(min_, max_, size):
+    offset = abs(max_ - min_) / (2 * size)
+
+    return min_ + offset, max_ - offset
+
+
 def rectilinear_1d(resolution):
     sizes = {
+        "tiny": (18, 9),
         "small": (180, 90),
         "mid": (1800, 900),
         "large": (7200, 3600),
@@ -13,9 +20,11 @@ def rectilinear_1d(resolution):
         raise ValueError(f"unknown resolution: {resolution!r}")
 
     size_lon, size_lat = sizes[resolution]
+    min_lat, max_lat = _bounds(-90, 90, size_lat)
+    min_lon, max_lon = _bounds(-180, 180, size_lon)
 
-    lat = np.linspace(-90, 90, size_lat)
-    lon = np.linspace(-180, 180, size_lon)
+    lat = np.linspace(min_lat, max_lat, size_lat)
+    lon = np.linspace(min_lon, max_lon, size_lon)
 
     return xr.Dataset(
         coords={
@@ -27,6 +36,7 @@ def rectilinear_1d(resolution):
 
 def rectilinear_2d(resolution):
     sizes = {
+        "tiny": (18, 9),
         "small": (180, 90),
         "mid": (1800, 900),
         "large": (7200, 3600),
@@ -36,8 +46,11 @@ def rectilinear_2d(resolution):
 
     size_lon, size_lat = sizes[resolution]
 
-    lat_ = np.linspace(-90, 90, size_lat)
-    lon_ = np.linspace(-180, 180, size_lon)
+    min_lat, max_lat = _bounds(-90, 90, size_lat)
+    min_lon, max_lon = _bounds(-180, 180, size_lon)
+
+    lat_ = np.linspace(min_lat, max_lat, size_lat)
+    lon_ = np.linspace(min_lon, max_lon, size_lon)
     lon, lat = np.meshgrid(lon_, lat_)
 
     return xr.Dataset(
@@ -50,6 +63,7 @@ def rectilinear_2d(resolution):
 
 def curvilinear_2d(resolution):
     sizes = {
+        "tiny": (18, 9),
         "small": (180, 90),
         "mid": (1800, 900),
         "large": (7200, 3600),
