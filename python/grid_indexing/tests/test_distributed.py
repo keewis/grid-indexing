@@ -180,6 +180,24 @@ class TestChunkGrid:
         assert np.isdtype(actual.dtype, kind=np.object_)
         assert isinstance(actual[0, 0], np.ndarray)
 
+    def test_flat_iter_chunks(self):
+        arr = da.from_array(np.arange(12).reshape(4, 3), chunks=(3, 2))
+
+        shape = arr.shape
+        chunksizes = _infer_chunksizes(arr)
+        delayed = arr.to_delayed()
+
+        grid = ChunkGrid(shape, chunksizes, delayed)
+
+        actual = list(grid.flat_iter_chunks())
+        expected = [
+            ((i, j), tuple(chunksizes[i, j].tolist()), delayed[i, j])
+            for i in range(delayed.shape[0])
+            for j in range(delayed.shape[1])
+        ]
+
+        assert actual == expected
+
 
 class TestDistributedRTree:
     @pytest.mark.parametrize(
