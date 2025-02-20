@@ -130,6 +130,42 @@ class TestChunkGrid:
         assert f"shape={shape}" in actual
         assert "chunks=4" in actual
 
+    def test_getitem(self):
+        arr = da.zeros((7, 6), chunks=(5, 4))
+
+        shape = arr.shape
+        chunksizes = _infer_chunksizes(arr)
+        delayed = arr.to_delayed()
+
+        grid = ChunkGrid(shape, chunksizes, delayed)
+
+        indices = (1, 0)
+
+        actual = grid[indices]
+        expected = delayed[indices]
+
+        assert actual is expected
+
+    def test_map(self):
+        func = lambda c: c * 2
+
+        arr = da.from_array(np.arange(12).reshape(4, 3), chunks=(3, 2))
+
+        shape = arr.shape
+        chunksizes = _infer_chunksizes(arr)
+        delayed = arr.to_delayed()
+
+        grid = ChunkGrid(shape, chunksizes, delayed)
+
+        actual = grid.map(func)
+        computed_ = np.asarray(
+            dask.compute(actual.delayed.flatten().tolist())[0], dtype=object
+        )
+        actual_ = da.block(np.reshape(computed_, delayed.shape).tolist())
+        expected = func(arr).compute()
+
+        np.testing.assert_equal(actual_, expected)
+
 
 class TestDistributedRTree:
     @pytest.mark.parametrize(
