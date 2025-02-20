@@ -12,7 +12,8 @@ from grid_indexing import Index
 from grid_indexing.distributed import (
     ChunkGrid,
     DistributedRTree,
-    extract_chunk_boundaries,
+    _chunk_boundaries,
+    _infer_chunksizes,
 )
 from grid_indexing.tests import example_geometries
 
@@ -54,7 +55,7 @@ def example_query(request):
     return queries[request.param]
 
 
-def test_extract_chunk_boundaries():
+def test_chunk_boundaries():
     vertices = np.array(
         [
             [[0, 0], [0, 1], [1, 1], [1, 0]],
@@ -63,22 +64,17 @@ def test_extract_chunk_boundaries():
             [[1, 1], [1, 2], [2, 2], [2, 1]],
         ]
     )
-    geometries = shapely.polygons(vertices)
+    chunk = shapely.polygons(vertices)
 
-    arr = da.from_array(geometries, chunks=(2,))
-    chunks = arr.to_delayed().flatten()
-
-    [actual] = dask.compute(extract_chunk_boundaries(chunks))
-    expected = shapely.polygons(
-        np.array([[[0, 0], [0, 1], [2, 1], [2, 0]], [[0, 1], [0, 2], [2, 2], [2, 1]]])
-    )
+    actual = _chunk_boundaries(chunk)
+    expected = shapely.polygons(np.array([[[0, 0], [0, 2], [2, 2], [2, 0]]]))
 
     shapely.testing.assert_geometries_equal(actual, expected)
 
 
 class TestChunkGrid:
     @pytest.mark.parametrize(
-        ["arr", "expected_chunks"],
+        ["arr", "expected_chunksizes"],
         (
             (da.zeros((4,), chunks=(2,)), np.array([[2], [2]])),
             (
@@ -87,42 +83,28 @@ class TestChunkGrid:
             ),
         ),
     )
-    def test_from_dask(self, arr, expected_chunks):
+    def test_from_dask(self, arr, expected_chunksizes):
         chunk_grid = ChunkGrid.from_dask(arr)
 
         assert chunk_grid.shape == arr.shape
-        np.testing.assert_equal(chunk_grid.chunks, expected_chunks)
+        np.testing.assert_equal(chunk_grid.chunksizes, expected_chunksizes)
 
     def test_grid_shape(self):
-        shape = (7, 3)
-        chunks = np.array(
-            [
-                [[2, 1], [2, 1], [2, 1]],
-                [[2, 1], [2, 1], [2, 1]],
-                [[2, 1], [2, 1], [2, 1]],
-                [[1, 1], [1, 1], [1, 1]],
-            ]
-        )
+        arr = da.zeros((7, 3), chunks=(2, 1))
+        shape = arr.shape
+        chunksizes = _infer_chunksizes(arr)
 
-        grid = ChunkGrid(shape, chunks)
+        grid = ChunkGrid(shape, chunksizes, arr.to_delayed())
         expected = (4, 3)
 
         assert grid.grid_shape == expected
 
-    @pytest.mark.parametrize(["flattened_index", "expected"], ((0, 12), (3, 9)))
-    def test_chunk_size(self, flattened_index, expected):
-        shape = (7, 6)
-        chunks = np.array([[[4, 3], [4, 3]], [[3, 3], [3, 3]]])
-
-        grid = ChunkGrid(shape, chunks)
-
-        assert grid.chunk_size(flattened_index) == expected
-
     def test_repr(self):
-        shape = (7, 6)
-        chunks = np.array([[[4, 3], [4, 3]], [[3, 3], [3, 3]]])
+        arr = da.zeros((7, 6), chunks=(4, 3))
+        shape = arr.shape
+        chunksizes = _infer_chunksizes(arr)
 
-        grid = ChunkGrid(shape, chunks)
+        grid = ChunkGrid(shape, chunksizes, arr.to_delayed())
 
         actual = repr(grid)
 
