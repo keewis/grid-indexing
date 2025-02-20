@@ -72,6 +72,25 @@ def test_chunk_boundaries():
     shapely.testing.assert_geometries_equal(actual, expected)
 
 
+@pytest.mark.parametrize(
+    ["arr", "expected"],
+    (
+        (
+            da.zeros((12, 10), chunks=(6, 5)),
+            np.array([[[6, 5], [6, 5]], [[6, 5], [6, 5]]]),
+        ),
+        (
+            da.zeros((5, 3), chunks=(2, 3)),
+            np.array([[[2, 3]], [[2, 3]], [[1, 3]]]),
+        ),
+    ),
+)
+def test_infer_chunksizes(arr, expected):
+    actual = _infer_chunksizes(arr)
+
+    np.testing.assert_equal(actual, expected)
+
+
 class TestChunkGrid:
     @pytest.mark.parametrize(
         ["arr", "expected_chunksizes"],
