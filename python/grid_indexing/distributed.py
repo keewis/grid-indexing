@@ -34,7 +34,7 @@ def _query_overlap(index, chunk, shape):
 
 
 @dataclass
-class DelayedGrid:
+class ChunkGrid:
     shape: tuple[int, ...]
     chunksizes: np.ndarray
 
@@ -88,7 +88,7 @@ class DistributedRTree:
     def __init__(self, geoms):
         import dask
 
-        self.source_grid = DelayedGrid.from_dask(geoms)
+        self.source_grid = ChunkGrid.from_dask(geoms)
 
         boundaries = self.source_grid.map(
             dask.delayed(_chunk_boundaries), flatten=True
@@ -102,7 +102,7 @@ class DistributedRTree:
         import dask.array as da
 
         # prepare
-        target_grid = DelayedGrid.from_dask(geoms)
+        target_grid = ChunkGrid.from_dask(geoms)
         chunk_grid_shape = target_grid.grid_shape + self.source_grid.grid_shape
 
         # query overlapping indices
