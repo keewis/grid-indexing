@@ -213,14 +213,18 @@ class TestDistributedRTree:
 
     @pytest.mark.parametrize("chunks", (1, 2))
     def test_query_overlap(self, example_grid, example_query, chunks):
-        chunked_polygons = da.from_array(example_grid, chunks=(2,))
+        source_grid = example_grid.reshape(2, 2)
+        chunked_polygons = da.from_array(source_grid, chunks=(2, 1))
 
-        index = Index.from_shapely(example_grid.flatten())
+        index = Index.from_shapely(source_grid.flatten())
         distributed_index = DistributedRTree(chunked_polygons)
 
         chunked_query = da.from_array(example_query, chunks=chunks)
+        expected_shape = chunked_query.shape + chunked_polygons.shape
 
-        expected = index.query_overlap(geoarrow.from_shapely(example_query))
+        expected = np.reshape(
+            index.query_overlap(geoarrow.from_shapely(example_query)), expected_shape
+        )
         [actual] = dask.compute(distributed_index.query_overlap(chunked_query))
 
         np.testing.assert_equal(actual.todense(), expected.todense())
