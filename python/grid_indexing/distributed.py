@@ -33,6 +33,10 @@ def _query_overlap(index, chunk, shape):
     return np.reshape(result, shape)
 
 
+def _infer_chunksizes(arr):
+    return np.stack(np.meshgrid(*arr.chunks, indexing="ij"), axis=-1)
+
+
 @dataclass
 class ChunkGrid:
     shape: tuple[int, ...]
@@ -43,7 +47,7 @@ class ChunkGrid:
     @classmethod
     def from_dask(cls, arr):
         shape = arr.shape
-        chunksizes = np.stack(np.meshgrid(*arr.chunks, indexing="ij"), axis=-1)
+        chunksizes = _infer_chunksizes(arr)
 
         return cls(shape, chunksizes, arr.to_delayed())
 
