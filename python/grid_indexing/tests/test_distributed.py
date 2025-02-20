@@ -166,6 +166,20 @@ class TestChunkGrid:
 
         np.testing.assert_equal(actual_, expected)
 
+    def test_compute(self):
+        arr = da.from_array(np.arange(12).reshape(4, 3), chunks=(3, 2))
+
+        shape = arr.shape
+        chunksizes = _infer_chunksizes(arr)
+        delayed = arr.to_delayed()
+
+        grid = ChunkGrid(shape, chunksizes, delayed)
+
+        actual = grid.compute()
+        assert actual.shape == delayed.shape
+        assert np.isdtype(actual.dtype, kind=np.object_)
+        assert isinstance(actual[0, 0], np.ndarray)
+
 
 class TestDistributedRTree:
     @pytest.mark.parametrize(

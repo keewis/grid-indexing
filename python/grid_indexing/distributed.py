@@ -79,7 +79,7 @@ class ChunkGrid:
 
         [computed] = dask.compute(self.delayed.flatten().tolist())
 
-        return np.reshape(np.asarray(computed), self.delayed.shape)
+        return np.reshape(np.asarray(computed, dtype=object), self.delayed.shape)
 
     def __repr__(self):
         name = type(self).__name__
