@@ -60,6 +60,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install pkg-config
+        run: |
+          if [[ "${{matrix.os}}" == "windows-latest" ]]; then
+            choco install pkgconfiglite
+          elif [[ "${{matrix.os}}" == "ubuntu-latest" ]]; then
+            sudo apt install pkg-config
+          elif [[ "${{matrix.os}}" == "macos-latest" ]]; then
+            brew install pkg-config
+          fi
+
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
