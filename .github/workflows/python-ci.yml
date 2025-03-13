@@ -83,8 +83,8 @@ jobs:
           fi
           popd
 
-          echo "PKG_CONFIG_PATH='$PKG_CONFIG_PATH'" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Clean up pkg-config
         if: runner.os == 'Windows'
