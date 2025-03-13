@@ -60,16 +60,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install pkg-config
-        run: |
-          if [[ "${{matrix.os}}" == "windows-latest" ]]; then
-            choco install pkgconfiglite
-          elif [[ "${{matrix.os}}" == "ubuntu-latest" ]]; then
-            sudo apt install pkg-config
-          elif [[ "${{matrix.os}}" == "macos-latest" ]]; then
-            brew install pkg-config
-          fi
-
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
@@ -86,8 +76,13 @@ jobs:
       - name: Help finding installed libraries
         run: |
           pushd $CONDA_PREFIX
-          export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig):$PKG_CONFIG_PATH"
-          export LD_LIBRARY_PATH="$(readlink -f lib):$LD_LIBRARY_PATH"
+          if [[ ${{ runner.os }} == "Windows" ]]; then
+            export PKG_CONFIG_PATH="$(readlink -f Library/lib/pkgconfig)"
+            export LD_LIBRARY_PATH="$(readlink -f Library/lib)"
+          else
+            export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
+            export LD_LIBRARY_PATH="$(readlink -f lib)"
+          fi
           export CPATH="$(readlink -f include):$CPATH"
           export PYO3_PYTHON="$(readlink -f bin/python)"
           popd
@@ -109,26 +104,21 @@ jobs:
           echo "CPATH=$CPATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
-          echo >> .cargo/config.toml
-          echo "[env]" >> .cargo/config.toml
-          echo "PKG_CONFIG_PATH = '$PKG_CONFIG_PATH'" >> .cargo/config.toml
-          echo "LD_LIBRARY_PATH = '$LD_LIBRARY_PATH'" >> .cargo/config.toml
-          echo "CPATH = '$CPATH'" >> .cargo/config.toml
-          echo "PYO3_PYTHON = '$PYO3_PYTHON'" >> .cargo/config.toml
-
-          echo "final cargo config:"
-          cat .cargo/config.toml
-          echo "---"
-          echo "env:"
-          env
-
-      - name: Run pkg-config
+      - name: Clean up pkg-config
+        if: runner.os == 'Windows'
         run: |
-          which pkg-config
-          pkg-config --list-all
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+
+          # remove dependency paths
+          sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
+
+          # check that this actually works
+          pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Run tests
         run: |
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+
           cargo build --tests --keep-going
           cargo test --no-fail-fast
 
