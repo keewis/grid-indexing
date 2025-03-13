@@ -2,7 +2,6 @@ channels:
   - conda-forge
 dependencies:
   - maturin
-  - pkg-config
   - proj
   - sqlite
   - shapely

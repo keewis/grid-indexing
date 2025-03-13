@@ -2,7 +2,6 @@ channels:
   - conda-forge
 dependencies:
   - proj
-  - pkg-config
   - openssl
   - sqlite
   - xz

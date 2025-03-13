@@ -71,6 +71,16 @@ jobs:
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Install pkg-config
+        run: |
+          if [[ "${{matrix.os}}" == "windows-latest" ]]; then
+            choco install pkgconfiglite
+          elif [[ "${{matrix.os}}" == "ubuntu-latest" ]]; then
+            sudo apt install pkg-config
+          elif [[ "${{matrix.os}}" == "macos-latest" ]]; then
+            brew install pkg-config
+          fi
+
       - name: Help finding installed libraries
         run: |
           pushd $CONDA_PREFIX
