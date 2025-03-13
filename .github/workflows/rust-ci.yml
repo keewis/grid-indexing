@@ -42,7 +42,7 @@ jobs:
         os:
           - "ubuntu-latest"
           # building proj-sys on windows appears to not really be possible
-          # - "windows-latest"
+          - "windows-latest"
           - "macos-latest"
         python-version: ["3.10", "3.12", "3.13"]
 
@@ -69,15 +69,21 @@ jobs:
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
             python=${{ matrix.python-version }}
+
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
+
       - name: Help finding installed libraries
         run: |
           pushd $CONDA_PREFIX
-          export PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)
-          export LD_LIBRARY_PATH=$(readlink -f lib)
-          export CPATH=$(readlink -f include)
-          export PYO3_PYTHON=$(readlink -f bin/python)
+          if [[ ${{ runner.os }} == "Windows" ]]; then
+            export PKG_CONFIG_PATH="$(readlink -f Library/lib/pkgconfig)"
+            export LD_LIBRARY_PATH="$(readlink -f Library/lib)"
+          else
+            export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
+            export LD_LIBRARY_PATH="$(readlink -f lib)"
+          fi
+          export CPATH="$(readlink -f include):$CPATH"
           popd
 
           if [[ -z "$CONDA_PREFIX" ]]; then
@@ -95,23 +101,23 @@ jobs:
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "CPATH=$CPATH" >> $GITHUB_ENV
-          echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
+          echo "PYO3_PYTHON=$(which python)" >> $GITHUB_ENV
 
-          echo >> .cargo/config.toml
-          echo "[env]" >> .cargo/config.toml
-          echo "PKG_CONFIG_PATH = '$PKG_CONFIG_PATH'" >> .cargo/config.toml
-          echo "LD_LIBRARY_PATH = '$LD_LIBRARY_PATH'" >> .cargo/config.toml
-          echo "CPATH = '$CPATH'" >> .cargo/config.toml
-          echo "PYO3_PYTHON = '$PYO3_PYTHON'" >> .cargo/config.toml
+      - name: Clean up pkg-config
+        if: runner.os == 'Windows'
+        run: |
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
-          echo "final cargo config:"
-          cat .cargo/config.toml
-          echo "---"
-          echo "env:"
-          env
+          # remove dependency paths
+          sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
+
+          # check that this actually works
+          pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Run tests
         run: |
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+
           cargo build --tests --keep-going
           cargo test --no-fail-fast
 

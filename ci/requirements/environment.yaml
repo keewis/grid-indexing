@@ -5,6 +5,9 @@ dependencies:
   - pkg-config
   - proj
   - sqlite
+  - openssl
+  - zlib
+  - libtiff
   - shapely
   - numpy
   - sparse>=0.15
