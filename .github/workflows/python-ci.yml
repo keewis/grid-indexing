@@ -71,33 +71,36 @@ jobs:
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Install pkg-config
-        run: |
-          if [[ "${{matrix.os}}" == "windows-latest" ]]; then
-            choco install pkgconfiglite
-          elif [[ "${{matrix.os}}" == "ubuntu-latest" ]]; then
-            sudo apt install pkg-config
-          elif [[ "${{matrix.os}}" == "macos-latest" ]]; then
-            brew install pkg-config
-          fi
-
       - name: Help finding installed libraries
         run: |
-          echo $(pwd)
           pushd $CONDA_PREFIX
-          export PKG_CONFIG="$(readlink -f lib/pkgconfig):$PKG_CONFIG_PATH"
-          export LD_LIBRARY_PATH="$(readlink -f lib):$LD_LIBRARY_PATH"
-          echo "PKG_CONFIG_PATH='$PKG_CONFIG_PATH'" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'" >> $GITHUB_ENV
+          if [[ ${{ runner.os }} == "Windows" ]]; then
+            export PKG_CONFIG_PATH="$(readlink -f Library/lib/pkgconfig)"
+            export LD_LIBRARY_PATH="$(readlink -f Library/lib)"
+          else
+            export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
+            export LD_LIBRARY_PATH="$(readlink -f lib)"
+          fi
           popd
 
-          if [[ -z "$CONDA_PREFIX" ]]; then
-            echo "CONDA_PREFIX is unset!"
-            exit 1
-          fi
+          echo "PKG_CONFIG_PATH='$PKG_CONFIG_PATH'" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'" >> $GITHUB_ENV
+
+      - name: Clean up pkg-config
+        if: runner.os == 'Windows'
+        run: |
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+
+          # remove dependency paths
+          sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
+
+          # check that this actually works
+          pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Install the package
         run: |
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+
           maturin develop
 
       - name: Check imports
