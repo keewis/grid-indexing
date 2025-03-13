@@ -121,11 +121,14 @@ jobs:
           echo "---"
           echo "env:"
           env
+
+      - name: Run pkg-config
+        run: |
+          which pkg-config
           pkg-config --list-all
 
       - name: Run tests
         run: |
-          pkg-config --list-all
           cargo build --tests --keep-going
           cargo test --no-fail-fast
 
