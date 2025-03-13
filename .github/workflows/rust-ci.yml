@@ -79,8 +79,10 @@ jobs:
           cache-environment-key: "${{runner.os}}-${{runner.arch}}-rust-py${{ matrix.python-version }}-${{env.TODAY}}-${{hashFiles(env.CONDA_ENV_FILE)}}"
           create-args: >-
             python=${{ matrix.python-version }}
+
       - name: Create rust cache
         uses: Swatinem/rust-cache@v2
+
       - name: Help finding installed libraries
         run: |
           pushd $CONDA_PREFIX
@@ -106,12 +108,6 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "CPATH=$CPATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
-
-          # try overriding the cargo env specifically
-          echo "CARGO_PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
-          echo "CARGO_LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "CARGO_CPATH=$CPATH" >> $GITHUB_ENV
-          echo "CARGO_PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
           echo >> .cargo/config.toml
           echo "[env]" >> .cargo/config.toml
