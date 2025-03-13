@@ -100,6 +100,7 @@ jobs:
       - name: Install the package
         run: |
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+          export PYO3_PYTHON="${{env.PYO3_PYTHON}}"
 
           maturin develop
 
