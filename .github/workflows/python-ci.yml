@@ -83,9 +83,12 @@ jobs:
 
       - name: Help finding installed libraries
         run: |
+          echo $(pwd)
           pushd $CONDA_PREFIX
-          echo "PKG_CONFIG_PATH=$(readlink -f lib/pkgconfig)" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
+          export PKG_CONFIG="$(readlink -f lib/pkgconfig):$PKG_CONFIG_PATH"
+          export LD_LIBRARY_PATH="$(readlink -f lib):$LD_LIBRARY_PATH"
+          echo "PKG_CONFIG_PATH='$PKG_CONFIG_PATH'" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH'" >> $GITHUB_ENV
           popd
 
           if [[ -z "$CONDA_PREFIX" ]]; then
