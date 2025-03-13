@@ -97,6 +97,12 @@ jobs:
           echo "CPATH=$CPATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
+          # try overriding the cargo env specifically
+          echo "CARGO_PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "CARGO_LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "CARGO_CPATH=$CPATH" >> $GITHUB_ENV
+          echo "CARGO_PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
+
           echo >> .cargo/config.toml
           echo "[env]" >> .cargo/config.toml
           echo "PKG_CONFIG_PATH = '$PKG_CONFIG_PATH'" >> .cargo/config.toml
