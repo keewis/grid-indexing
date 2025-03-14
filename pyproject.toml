@@ -29,6 +29,9 @@ tests = [
   "pytest",
 ]
 
+[project.entry-points."dask.sizeof"]
+grid-indexing = "grid_indexing.distributed:sizeof_plugin"
+
 [tool.maturin]
 python-source = "python"
 features = ["pyo3/extension-module"]

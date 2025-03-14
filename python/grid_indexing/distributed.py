@@ -150,3 +150,9 @@ class DistributedRTree:
                 output_chunks[indices] = chunk
 
         return da.block(output_chunks.tolist())
+
+
+def sizeof_plugin(sizeof):
+    @sizeof.register(Index)
+    def sizeof_index(index):
+        return index.nbytes
