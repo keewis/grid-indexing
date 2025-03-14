@@ -2,7 +2,7 @@ use bincode::{deserialize, serialize};
 use std::mem;
 use std::ops::Deref;
 
-use geo::{Polygon, Relate};
+use geo::{CoordsIter, Polygon, Relate};
 use geoarrow::array::{ArrayBase, PolygonArray};
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
 use pyo3::exceptions::PyRuntimeError;
@@ -10,7 +10,7 @@ use pyo3::intern;
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyType};
 use pyo3_arrow::PyArray;
-use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
+use rstar::{primitives::CachedEnvelope, ParentNode, RTree, RTreeNode, RTreeObject};
 use serde::{Deserialize, Serialize};
 
 use super::trait_::{AsPolygonArray, AsSparse};
@@ -32,6 +32,13 @@ impl NumberedCell {
     pub fn geometry(&self) -> &Polygon {
         self.envelope.deref()
     }
+
+    pub fn num_bytes(&self) -> usize {
+        let mut nbytes = mem::size_of_val(self);
+        nbytes += (*self.envelope).coords_count() * 2 * mem::size_of::<f64>();
+
+        nbytes
+    }
 }
 
 impl RTreeObject for NumberedCell {
@@ -42,14 +49,76 @@ impl RTreeObject for NumberedCell {
     }
 }
 
+struct LeafReference<'a> {
+    reference: &'a NumberedCell,
+}
+
+struct ParentNodeReference<'a> {
+    reference: &'a ParentNode<NumberedCell>,
+}
+
+enum NodeReference<'a> {
+    Node(ParentNodeReference<'a>),
+    Leaf(LeafReference<'a>),
+}
+
+fn estimate_tree_size(tree: &RTree<NumberedCell>) -> usize {
+    let mut nbytes = mem::size_of_val(tree);
+
+    let mut to_visit: Vec<NodeReference> = vec![NodeReference::Node(ParentNodeReference {
+        reference: tree.root(),
+    })];
+    while let Some(item) = to_visit.pop() {
+        // Iteration:
+        // - pop the next item
+        // - if the popped item was a parent node, extend the queue
+        // - return the popped item
+        match item {
+            NodeReference::Node(parent) => {
+                to_visit.extend(
+                    parent
+                        .reference
+                        .children()
+                        .iter()
+                        .map(|n| match n {
+                            RTreeNode::Parent(p) => {
+                                NodeReference::Node(ParentNodeReference { reference: p })
+                            }
+                            RTreeNode::Leaf(l) => {
+                                NodeReference::Leaf(LeafReference { reference: l })
+                            }
+                        })
+                        .collect::<Vec<NodeReference>>(),
+                );
+
+                nbytes += mem::size_of_val(parent.reference);
+            }
+            NodeReference::Leaf(leaf) => {
+                nbytes += leaf.reference.num_bytes();
+            }
+        };
+    }
+
+    nbytes
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[pyclass]
 #[pyo3(module = "grid_indexing")]
 pub struct Index {
     tree: RTree<NumberedCell>,
+    num_bytes: usize,
 }
 
 impl Index {
+    fn from_tree(tree: RTree<NumberedCell>) -> Self {
+        let nbytes = estimate_tree_size(&tree);
+        Index {
+            tree,
+            num_bytes: nbytes,
+        }
+    }
+
     pub fn create(cell_geoms: PolygonArray) -> Self {
         let cells: Vec<_> = cell_geoms
             .iter()
@@ -58,9 +127,7 @@ impl Index {
             .map(|c| NumberedCell::new(c.0, c.1.to_geo()))
             .collect();
 
-        Index {
-            tree: RTree::bulk_load_with_params(cells),
-        }
+        Self::from_tree(RTree::bulk_load_with_params(cells))
     }
 
     fn overlaps_one(&self, cell: Polygon) -> Vec<usize> {
@@ -89,7 +156,7 @@ impl Index {
 
 #[pyfunction]
 pub fn create_empty() -> Index {
-    Index { tree: RTree::new() }
+    Index::from_tree(RTree::new())
 }
 
 #[pymethods]
@@ -129,8 +196,9 @@ impl Index {
         ))
     }
 
+    #[getter]
     pub fn nbytes(&self) -> PyResult<usize> {
-        Ok(mem::size_of_val(self))
+        Ok(self.num_bytes)
     }
 
     #[classmethod]
