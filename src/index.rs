@@ -1,4 +1,5 @@
 use bincode::{deserialize, serialize};
+use std::mem;
 use std::ops::Deref;
 
 use geo::{Polygon, Relate};
@@ -126,6 +127,10 @@ impl Index {
             args.into_pyobject(py)?.unbind().into_any(),
             state.into_pyobject(py)?.unbind().into_any(),
         ))
+    }
+
+    pub fn nbytes(&self) -> PyResult<usize> {
+        Ok(mem::size_of_val(self))
     }
 
     #[classmethod]
