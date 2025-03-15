@@ -97,7 +97,7 @@ jobs:
           mkdir -p target/debug
           # TODO: figure out why the linker straight-up ignores the `-L` flag
           # returned by `pkg-config
-          ln -s $COND_PREFIX/lib target/debug/deps
+          ln -s $CONDA_PREFIX/lib target/debug/deps
 
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
