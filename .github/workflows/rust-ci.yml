@@ -110,6 +110,9 @@ jobs:
           # remove dependency paths
           sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
 
+          ls -l ${{env.PYO3_PYTHON}}
+          ls -l $CONDA_PREFIX
+
           # check that this actually works
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
