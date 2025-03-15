@@ -94,13 +94,9 @@ jobs:
       - name: Help the linker on macos
         if: runner.os == 'MacOS'
         run: |
-          pwd
-          mkdir -p target/debug
-          # TODO: figure out why the linker straight-up ignores the `-L` flag
-          # returned by `pkg-config
-          ln -s $CONDA_PREFIX/lib target/debug/deps
-          ls -ld target/debug/deps
-          ls -l target/debug/deps
+          pushd $CONDA_PREFIX
+          echo "DYLD_LIBRARY_PATH=$(readlink -f lib)" >> $GITHUB_ENV
+          popd
 
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
@@ -120,6 +116,7 @@ jobs:
       - name: Run tests
         run: |
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+          export DYLD_LIBRARY_PATH="${{env.DYLD_LIBRARY_PATH}}"
 
           cargo build --tests --keep-going
           cargo test --no-fail-fast
