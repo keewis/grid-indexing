@@ -83,24 +83,10 @@ jobs:
             export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
             export LD_LIBRARY_PATH="$(readlink -f lib)"
           fi
-          export CPATH="$(readlink -f include):$CPATH"
           popd
-
-          if [[ -z "$CONDA_PREFIX" ]]; then
-            echo "CONDA_PREFIX is unset!";
-            exit 1
-          fi
-
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            mkdir -p target/debug/deps
-            ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
-            ls -l target/debug/deps
-            ls -l $CONDA_PREFIX/lib
-          fi
 
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "CPATH=$CPATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - name: Clean up pkg-config
