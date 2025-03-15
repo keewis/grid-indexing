@@ -79,12 +79,11 @@ jobs:
           if [[ ${{ runner.os }} == "Windows" ]]; then
             export PKG_CONFIG_PATH="$(readlink -f Library/lib/pkgconfig)"
             export LD_LIBRARY_PATH="$(readlink -f Library/lib)"
-            ls -l
-            export "PYO3_PYTHON=$(readlink -f Scripts/python)"
+            export PYO3_PYTHON="$(readlink -f python.exe)"
           else
             export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
             export LD_LIBRARY_PATH="$(readlink -f lib)"
-            export "PYO3_PYTHON=$(readlink -f bin/python)"
+            export PYO3_PYTHON="$(readlink -f bin/python)"
           fi
           popd
 
