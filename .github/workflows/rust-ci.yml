@@ -91,13 +91,17 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
-      - name: Investigate pkg-config on macos
+      - name: Help the linker on macos
         if: runner.os == 'MacOS'
         run: |
+          mkdir -p target/debug
+          # TODO: figure out why the linker straight-up ignores the `-L` flag
+          # returned by `pkg-config
+          ln -s $COND_PREFIX/lib target/debug/deps
+
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
-          ls -l $CONDA_PREFIX/lib
 
       - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
