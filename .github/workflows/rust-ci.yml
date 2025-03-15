@@ -101,6 +101,7 @@ jobs:
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
+          pkgconf --help
 
       - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
