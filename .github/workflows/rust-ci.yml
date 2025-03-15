@@ -96,6 +96,9 @@ jobs:
         run: |
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
+          mkdir -p target/debug/deps
+          ln -s $CONDA_PREFIX/lib/*.dylib target/debug/deps/
+
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
           pkgconf --libs --cflags proj 'proj >= 9.4.0'
 
