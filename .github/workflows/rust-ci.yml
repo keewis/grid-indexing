@@ -94,10 +94,13 @@ jobs:
       - name: Help the linker on macos
         if: runner.os == 'MacOS'
         run: |
+          pwd
           mkdir -p target/debug
           # TODO: figure out why the linker straight-up ignores the `-L` flag
           # returned by `pkg-config
           ln -s $CONDA_PREFIX/lib target/debug/deps
+          ls -ld target/debug/deps
+          ls -l target/debug/deps
 
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
 
