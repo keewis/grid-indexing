@@ -56,6 +56,8 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libproj-dev libsqlite3-dev
 
+            export PKG_CONFIG_ALLOW_CROSS=1
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
