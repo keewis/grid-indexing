@@ -53,8 +53,8 @@ jobs:
           sccache: "true"
           manylinux: ${{ matrix.manylinux }}
           before-script-linux: |
-            sudo apt update
-            sudo apt install libproj-dev pkg-config
+            sudo apt-get update
+            sudo apt-get install -y libproj-dev pkg-config
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
