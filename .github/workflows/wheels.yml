@@ -85,6 +85,9 @@ jobs:
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
           sccache: "true"
           manylinux: musllinux_1_2
+          before-script-linux: |
+            sudo apt-get update
+            sudo apt-get install -y libproj-dev pkg-config
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
