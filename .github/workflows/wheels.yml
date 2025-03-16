@@ -52,6 +52,7 @@ jobs:
           environment-file: ci/requirements/environment-rust.yaml
 
       - name: Help finding installed libraries
+        shell: bash -l {0}
         run: |
           pushd $CONDA_PREFIX
           if [[ ${{ runner.os }} == "Windows" ]]; then
