@@ -45,6 +45,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: rust-tests
+          environment-file: ci/requirements/environment-rust.yaml
+
+      - name: Help finding installed libraries
+        run: |
+          pushd $CONDA_PREFIX
+          if [[ ${{ runner.os }} == "Windows" ]]; then
+            export PKG_CONFIG_PATH="$(readlink -f Library/lib/pkgconfig)"
+          else
+            export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
+          fi
+          popd
+
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
