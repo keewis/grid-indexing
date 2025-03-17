@@ -785,6 +785,7 @@ dependencies = [
  "geo",
  "geoarrow",
  "numpy",
+ "proj",
  "pyo3",
  "pyo3-arrow",
  "rstar",

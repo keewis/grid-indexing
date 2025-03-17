@@ -34,7 +34,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     needs: detect-ci-trigger
-    if: needs.detect-ci-trigger.outputs.triggered == 'false'
+    if: |
+      needs.detect-ci-trigger.outputs.triggered == 'false'
+      && !contains(github.event.pull_request.labels.*.name, 'skip-ci')
 
     strategy:
       fail-fast: false
@@ -79,31 +81,30 @@ jobs:
           if [[ ${{ runner.os }} == "Windows" ]]; then
             export PKG_CONFIG_PATH="$(readlink -f Library/lib/pkgconfig)"
             export LD_LIBRARY_PATH="$(readlink -f Library/lib)"
+            export PYO3_PYTHON="$(readlink -f python.exe)"
           else
             export PKG_CONFIG_PATH="$(readlink -f lib/pkgconfig)"
             export LD_LIBRARY_PATH="$(readlink -f lib)"
+            export PYO3_PYTHON="$(readlink -f bin/python)"
           fi
-          export CPATH="$(readlink -f include):$CPATH"
           popd
-
-          if [[ -z "$CONDA_PREFIX" ]]; then
-            echo "CONDA_PREFIX is unset!";
-            exit 1
-          fi
-
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            mkdir -p target/debug/deps
-            ln -s "$CONDA_PREFIX/lib/libpython${{ matrix.python-version }}.dylib" target/debug/deps
-            ls -l target/debug/deps
-            ls -l $CONDA_PREFIX/lib
-          fi
 
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "CPATH=$CPATH" >> $GITHUB_ENV
-          echo "PYO3_PYTHON=$(which python)" >> $GITHUB_ENV
+          echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
-      - name: Clean up pkg-config
+      - name: Help the linker on macos
+        if: runner.os == 'MacOS'
+        run: |
+          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+
+          mkdir -p target/debug/deps
+          ln -s $CONDA_PREFIX/lib/*.dylib target/debug/deps/
+
+          pkg-config --libs --cflags proj 'proj >= 9.4.0'
+          pkgconf --libs --cflags proj 'proj >= 9.4.0'
+
+      - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
         run: |
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
@@ -111,12 +112,16 @@ jobs:
           # remove dependency paths
           sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
 
+          ls -l ${{env.PYO3_PYTHON}}
+          ls -l $CONDA_PREFIX
+
           # check that this actually works
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Run tests
         run: |
           export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+          export PYO3_PYTHON="${{env.PYO3_PYTHON}}"
 
           cargo build --tests --keep-going
           cargo test --no-fail-fast
