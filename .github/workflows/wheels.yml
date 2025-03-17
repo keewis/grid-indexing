@@ -3,9 +3,7 @@ name: Build wheels
 on:
   push:
     tags:
-      - "*"
-  pull_request:
-    branches: [main]
+      - "v*"
   workflow_dispatch:
 
 permissions:
