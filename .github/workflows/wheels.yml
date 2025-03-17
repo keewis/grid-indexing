@@ -30,18 +30,19 @@ jobs:
           # - runner: ubuntu-latest
           #   target: x86
           #   manylinux: auto
-          - runner: ubuntu-latest
-            target: aarch64
-            manylinux: auto
-          - runner: ubuntu-latest
-            target: armv7
-            manylinux: auto
-          - runner: ubuntu-latest
-            target: s390x
-            manylinux: auto
-          - runner: ubuntu-latest
-            target: ppc64le
-            manylinux: auto
+          # TODO: figure out how to get a cross-compiled libproj
+          # - runner: ubuntu-latest
+          #   target: aarch64
+          #   manylinux: auto
+          # - runner: ubuntu-latest
+          #   target: armv7
+          #   manylinux: auto
+          # - runner: ubuntu-latest
+          #   target: s390x
+          #   manylinux: auto
+          # - runner: ubuntu-latest
+          #   target: ppc64le
+          #   manylinux: auto
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +55,7 @@ jobs:
           manylinux: ${{ matrix.manylinux }}
           before-script-linux: |
             sudo apt-get update
-            sudo apt-get install -y sqlite3 libsqlite3-dev pkg-config
+            sudo apt-get install -y libproj-dev pkg-config
 
             export PKG_CONFIG_ALLOW_CROSS=1
             pkg-config --list-all
