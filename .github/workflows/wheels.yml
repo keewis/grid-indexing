@@ -93,7 +93,7 @@ jobs:
           manylinux: musllinux_1_2
           before-script-linux: |
             sudo apt-get update
-            sudo apt-get install -y libproj-dev libsqlite3-dev
+            sudo apt-get install -y libproj-dev pkg-config
 
             export PKG_CONFIG_ALLOW_CROSS=1
             pkg-config --list-all
