@@ -107,6 +107,8 @@ jobs:
           path: dist
 
   windows:
+    # TODO: figure out how to install libproj on windows
+    if: false
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
@@ -196,7 +198,7 @@ jobs:
     needs:
       - linux
       # - musllinux
-      - windows
+      # - windows
       - macos
     steps:
       - uses: actions/download-artifact@v4
