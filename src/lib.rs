@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 
 mod index;
+mod rtreeobject;
 mod trait_;
 
 use self::index::{create_empty, Index};

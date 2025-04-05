@@ -1,5 +1,4 @@
 use bincode::{deserialize, serialize};
-use std::ops::Deref;
 
 use geo::{Polygon, Relate};
 use geoarrow::array::{ArrayBase, PolygonArray};
@@ -9,37 +8,11 @@ use pyo3::intern;
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyType};
 use pyo3_arrow::PyArray;
-use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
+use rstar::{RTree, RTreeObject};
 use serde::{Deserialize, Serialize};
 
+use super::rtreeobject::NumberedCell;
 use super::trait_::{AsPolygonArray, AsSparse};
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NumberedCell {
-    index: usize,
-    envelope: CachedEnvelope<Polygon>,
-}
-
-impl NumberedCell {
-    pub fn new(idx: usize, geom: Polygon) -> Self {
-        NumberedCell {
-            index: idx,
-            envelope: CachedEnvelope::<Polygon>::new(geom),
-        }
-    }
-
-    pub fn geometry(&self) -> &Polygon {
-        self.envelope.deref()
-    }
-}
-
-impl RTreeObject for NumberedCell {
-    type Envelope = <CachedEnvelope<Polygon> as RTreeObject>::Envelope;
-
-    fn envelope(&self) -> Self::Envelope {
-        self.envelope.envelope()
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[pyclass]
@@ -73,7 +46,7 @@ impl Index {
                 // (no touching)
                 relate.is_intersects() && !relate.is_touches()
             })
-            .map(|match_| match_.index)
+            .map(|match_| match_.index())
             .collect()
     }
 
