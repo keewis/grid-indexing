@@ -9,17 +9,18 @@ name = "grid_indexing"
 crate-type = ["cdylib"]
 
 [dependencies]
-bincode = "1.3.3"
-geo = { version = "0.29.3", features = [
+bincode = "1.3"
+geo = { version = "0.29", features = [
   "multithreading",
   "serde",
   "use-proj",
   "use-serde",
 ] }
-geoarrow = "0.4.0-beta.2"
-numpy = "0.23.0"
-proj = { version = "0.27.0", features = ["pkg_config"] }
-pyo3 = { version = "0.23.3", features = ["serde"] }
-pyo3-arrow = "0.6.0"
-rstar = { version = "0.12.2", features = ["serde"] }
-serde = "1.0.217"
+geoarrow = "0.4.0-beta.4"
+numpy = "0.24"
+proj = { version = "0.27", features = ["pkg_config"] }
+pyo3 = { version = "0.24", features = ["serde"] }
+pyo3-arrow = "0.8"
+arrow = "54.3"
+rstar = { version = "0.12", features = ["serde"] }
+serde = "1.0"
