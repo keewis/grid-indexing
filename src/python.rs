@@ -2,10 +2,11 @@ use super::index::CellRTree;
 use super::trait_::{AsPolygonArray, AsSparse};
 use bincode::{deserialize, serialize};
 use geoarrow::array::ArrayBase;
+use numpy::{PyArrayDyn, PyUntypedArrayMethods};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::intern;
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyType};
+use pyo3::types::{IntoPyDict, PyBytes, PyTuple, PyType};
 use pyo3_arrow::PyArray;
 
 use serde::{Deserialize, Serialize};
@@ -15,23 +16,31 @@ use serde::{Deserialize, Serialize};
 #[pyo3(module = "grid_indexing")]
 pub struct RTree {
     tree: CellRTree,
+    shape: Vec<usize>,
 }
 
 #[pyfunction]
 pub fn create_empty() -> RTree {
     RTree {
         tree: CellRTree::empty(),
+        shape: vec![],
     }
 }
 
 #[pymethods]
 impl RTree {
     #[new]
-    pub fn new(source_cells: PyArray) -> PyResult<Self> {
-        let polygons = source_cells.into_polygon_array();
+    #[pyo3(signature=(source_cells, shape=None))]
+    pub fn new(source_cells: PyArray, shape: Option<&Bound<PyTuple>>) -> PyResult<Self> {
+        let polygons = source_cells.into_polygon_array()?;
+        let shape_: Vec<usize> = match shape {
+            None => vec![polygons.len()],
+            Some(shape) => shape.extract()?,
+        };
 
-        polygons.map(|arr| RTree {
-            tree: CellRTree::create(arr),
+        Ok(RTree {
+            tree: CellRTree::create(polygons),
+            shape: shape_,
         })
     }
 
@@ -64,28 +73,42 @@ impl RTree {
     }
 
     #[classmethod]
-    pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<PyAny>) -> PyResult<Self> {
-        let array = Python::with_gil(|py| {
+    pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<'_, PyAny>) -> PyResult<Self> {
+        Python::with_gil(|py| {
             let geoarrow = PyModule::import(py, "geoarrow.rust.core")?;
             let crs = intern!(py, "epsg:4326");
 
             let kwargs = [("crs", crs)].into_py_dict(py)?;
+            let pyarray = geoms.downcast::<PyArrayDyn<PyObject>>()?;
+            let shape: Bound<PyTuple> = PyTuple::new(py, pyarray.shape())?;
 
             let pyobj = geoarrow
                 .getattr("from_shapely")?
-                .call((geoms,), Some(&kwargs))?;
+                .call((pyarray,), Some(&kwargs))?;
 
-            PyArray::extract_bound(&pyobj)
-        })?;
+            let array = PyArray::extract_bound(&pyobj)?;
 
-        Self::new(array)
+            Self::new(array, Some(&shape))
+        })
     }
 
-    pub fn query_overlap(&self, target_cells: PyArray) -> PyResult<Py<PyAny>> {
+    #[pyo3(signature=(target_cells, shape=None))]
+    pub fn query_overlap(
+        &self,
+        target_cells: PyArray,
+        shape: Option<&Bound<PyTuple>>,
+    ) -> PyResult<Py<PyAny>> {
         let polygons = target_cells.into_polygon_array()?;
+        let intermediate_shape = (polygons.len(), self.tree.size());
+
+        let target_shape = match shape {
+            None => vec![polygons.len()],
+            Some(shape) => shape.extract()?,
+        };
+        let final_shape: Vec<&usize> = target_shape.iter().chain(self.shape.iter()).collect();
 
         self.tree
             .overlaps(&polygons)
-            .into_sparse((polygons.len(), self.tree.size()))
+            .into_sparse(intermediate_shape, final_shape)
     }
 }
