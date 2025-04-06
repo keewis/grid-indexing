@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 import sparse
 
-from grid_indexing import Index
+from grid_indexing import RTree
 
 
 def _chunk_boundaries(chunk):
@@ -16,7 +16,7 @@ def _chunk_boundaries(chunk):
 
 
 def _index_from_shapely(chunk):
-    return Index(ga.from_shapely(chunk.flatten()))
+    return RTree(ga.from_shapely(chunk.flatten()))
 
 
 def _empty_chunk(index, chunk, shape):
@@ -99,7 +99,7 @@ class DistributedRTree:
         ).compute()
 
         self.chunk_indexes = self.source_grid.map(dask.delayed(_index_from_shapely))
-        self.index = Index.from_shapely(np.array(boundaries))
+        self.index = RTree.from_shapely(np.array(boundaries))
 
     def query_overlap(self, geoms):
         import dask

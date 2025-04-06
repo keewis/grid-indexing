@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 import sparse
 
-from grid_indexing import Index
+from grid_indexing import RTree
 
 
 def create_cells(x, y):
@@ -32,8 +32,8 @@ def test_create_index_from_shapely():
 
     cells = create_cells(x, y).flatten()
 
-    index = Index(geoarrow.from_shapely(cells))
-    assert isinstance(index, Index)
+    index = RTree(geoarrow.from_shapely(cells))
+    assert isinstance(index, RTree)
 
 
 def test_create_index_geoarrow():
@@ -42,8 +42,8 @@ def test_create_index_geoarrow():
 
     cells = create_cells(x, y).flatten()
 
-    index = Index.from_shapely(cells)
-    assert isinstance(index, Index)
+    index = RTree.from_shapely(cells)
+    assert isinstance(index, RTree)
 
 
 def test_query_overlap():
@@ -52,7 +52,7 @@ def test_query_overlap():
     ).flatten()
     target_cells = source_cells
 
-    index = Index.from_shapely(source_cells)
+    index = RTree.from_shapely(source_cells)
 
     actual = index.query_overlap(geoarrow.from_shapely(target_cells))
 
@@ -69,11 +69,11 @@ def test_pickle():
 
     cells = create_cells(x, y).flatten()
 
-    index = Index.from_shapely(cells)
+    index = RTree.from_shapely(cells)
 
     dumped = pickle.dumps(index)
     recreated = pickle.loads(dumped)
 
-    assert isinstance(recreated, Index)
+    assert isinstance(recreated, RTree)
     # TODO: compare the index
     # assert index == recreated

@@ -1,5 +1,5 @@
 from grid_indexing import grid_indexing, tutorial
-from grid_indexing.grid_indexing import Index, create_empty  # noqa: F401
+from grid_indexing.grid_indexing import RTree, create_empty  # noqa: F401
 from grid_indexing.grids import infer_cell_geometries, infer_grid_type
 
 __all__ = ["infer_grid_type", "infer_cell_geometries", "tutorial"]
