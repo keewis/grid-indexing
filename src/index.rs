@@ -69,6 +69,10 @@ mod tests {
         Some(Rect::new(ll, ur).to_polygon())
     }
 
+    fn polygon(exterior: Vec<(f64, f64)>) -> Option<Polygon> {
+        Some(Polygon::new(LineString::from(exterior), vec![]))
+    }
+
     fn normalize_result(result: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
         result
             .into_iter()
@@ -191,6 +195,43 @@ mod tests {
         ));
         let actual = index.overlaps(&target);
         let expected: Vec<Vec<usize>> = vec![vec![], vec![]];
+        assert_eq!(normalize_result(actual), expected);
+    }
+
+    /// check that the additional filter works properly
+    #[test]
+    fn test_overlaps_tilted() {
+        let source = PolygonArray::from((
+            vec![
+                polygon(vec![
+                    (0.0, 0.0),
+                    (1.0, 0.0),
+                    (1.5, 1.0),
+                    (0.5, 1.0),
+                    (0.0, 0.0),
+                ]),
+                polygon(vec![
+                    (1.0, 0.0),
+                    (2.0, 0.0),
+                    (2.5, 1.0),
+                    (1.5, 1.0),
+                    (1.0, 0.0),
+                ]),
+            ],
+            Dimension::XY,
+        ));
+        let index = CellRTree::create(source);
+
+        let target = PolygonArray::from((
+            vec![
+                bbox(coord! {x: -1.0, y: 0.8}, coord! {x: 0.2, y: 1.5}),
+                bbox(coord! {x: 2.4, y: 0.9}, coord! {x: 3.0, y: 2.0}),
+            ],
+            Dimension::XY,
+        ));
+
+        let actual = index.overlaps(&target);
+        let expected: Vec<Vec<usize>> = vec![vec![], vec![1]];
         assert_eq!(normalize_result(actual), expected);
     }
 }
