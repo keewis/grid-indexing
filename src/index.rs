@@ -122,10 +122,10 @@ mod tests {
 
         let array2 = PolygonArray::from((
             vec![
-                bbox(coord! {x:0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
-                bbox(coord! {x:1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
-                bbox(coord! {x:0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
-                bbox(coord! {x:1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
             ],
             Dimension::XY,
         ));
