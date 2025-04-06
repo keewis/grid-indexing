@@ -38,10 +38,12 @@ impl RTree {
             Some(shape) => shape.extract()?,
         };
 
-        Ok(RTree {
+        let instance = RTree {
             tree: CellRTree::create(polygons),
             shape: shape_,
-        })
+        };
+
+        Ok(instance)
     }
 
     pub fn __setstate__(&mut self, state: &[u8]) -> PyResult<()> {
@@ -75,16 +77,20 @@ impl RTree {
     #[classmethod]
     pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<'_, PyAny>) -> PyResult<Self> {
         Python::with_gil(|py| {
+            let pyarray = geoms.downcast::<PyArrayDyn<PyObject>>()?;
+
+            let shape = PyTuple::new(py, pyarray.shape())?;
             let geoarrow = PyModule::import(py, "geoarrow.rust.core")?;
+
             let crs = intern!(py, "epsg:4326");
 
             let kwargs = [("crs", crs)].into_py_dict(py)?;
-            let pyarray = geoms.downcast::<PyArrayDyn<PyObject>>()?;
-            let shape: Bound<PyTuple> = PyTuple::new(py, pyarray.shape())?;
+
+            let flattened = pyarray.getattr("flatten")?.call0()?;
 
             let pyobj = geoarrow
                 .getattr("from_shapely")?
-                .call((pyarray,), Some(&kwargs))?;
+                .call((flattened,), Some(&kwargs))?;
 
             let array = PyArray::extract_bound(&pyobj)?;
 
