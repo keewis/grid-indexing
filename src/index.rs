@@ -69,6 +69,16 @@ mod tests {
         Some(Rect::new(ll, ur).to_polygon())
     }
 
+    fn normalize_result(result: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+        result
+            .into_iter()
+            .map(|mut v| {
+                v.sort();
+                v
+            })
+            .collect::<Vec<_>>()
+    }
+
     #[test]
     fn test_create_from_polygon_array() {
         let polygon1 = Polygon::new(
@@ -130,5 +140,32 @@ mod tests {
             Dimension::XY,
         ));
         assert_eq!(CellRTree::create(array2).size(), 4);
+    }
+
+    #[test]
+    fn test_overlaps_rectilinear() {
+        let source = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+            ],
+            Dimension::XY,
+        ));
+        let index = CellRTree::create(source);
+
+        let target = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.2, y: 0.0}, coord! {x: 1.5, y: 1.0}),
+                bbox(coord! {x: 0.6, y: 1.2}, coord! {x: 0.9, y: 1.8}),
+                bbox(coord! {x: 0.3, y: 0.2}, coord! {x: 1.3, y: 1.6}),
+                bbox(coord! {x: 2.1, y: 2.3}, coord! {x: 2.7, y: 3.1}),
+            ],
+            Dimension::XY,
+        ));
+        let actual = index.overlaps(&target);
+        let expected: Vec<Vec<usize>> = vec![vec![0, 1], vec![2], vec![0, 1, 2, 3], vec![]];
+        assert_eq!(normalize_result(actual), expected);
     }
 }
