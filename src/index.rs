@@ -142,6 +142,7 @@ mod tests {
         assert_eq!(CellRTree::create(array2).size(), 4);
     }
 
+    /// check the basic functionality of the overlap search
     #[test]
     fn test_overlaps_rectilinear() {
         let source = PolygonArray::from((
