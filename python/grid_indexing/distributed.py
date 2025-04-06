@@ -70,7 +70,8 @@ class ChunkGrid:
 
         for flat_index in range(size):
             indices = tuple(map(int, np.unravel_index(flat_index, shape)))
-            chunk_shape = tuple(map(int, self.chunksizes[*indices, :]))
+
+            chunk_shape = tuple(map(int, self.chunksizes[indices + (slice(None),)]))
 
             yield indices, chunk_shape, self.delayed[indices]
 
