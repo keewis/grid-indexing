@@ -169,4 +169,28 @@ mod tests {
         let expected: Vec<Vec<usize>> = vec![vec![0, 1], vec![2], vec![0, 1, 2, 3], vec![]];
         assert_eq!(normalize_result(actual), expected);
     }
+
+    /// check touches
+    #[test]
+    fn test_overlaps_touches() {
+        let source = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+            ],
+            Dimension::XY,
+        ));
+        let index = CellRTree::create(source);
+
+        let target = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x: 2.0, y: 0.0}, coord! {x: 3.0, y: 1.0}),
+            ],
+            Dimension::XY,
+        ));
+        let actual = index.overlaps(&target);
+        let expected: Vec<Vec<usize>> = vec![vec![], vec![]];
+        assert_eq!(normalize_result(actual), expected);
+    }
 }
