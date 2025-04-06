@@ -63,10 +63,22 @@ class TestInferCellGeometries:
         with pytest.raises(error, match=pattern):
             grids.infer_cell_geometries(ds)
 
-    def test_infer_coords(self):
+    def test_infer_coords_error(self):
         ds = xr.Dataset()
         with pytest.raises(ValueError, match="cannot infer geographic coordinates"):
             grids.infer_cell_geometries(ds, grid_type="2d-rectilinear")
+
+    def test_infer_coords(self):
+        ds = example_grid("1d-rectilinear")
+
+        expected = grids.infer_cell_geometries(
+            ds, grid_type="1d-rectilinear", coords=["longitude", "latitude"]
+        )
+        actual = grids.infer_cell_geometries(ds, grid_type="1d-rectilinear")
+
+        shapely.testing.assert_geometries_equal(
+            geoarrow.to_shapely(actual), geoarrow.to_shapely(expected)
+        )
 
     @pytest.mark.parametrize(
         "grid_type",
