@@ -1,4 +1,5 @@
-[![CI](https://github.com/keewis/grid-indexing/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/keewis/grid-indexing/actions/ci.yml?query=branch%3Amain+event%3Apush)
+[![rust ci](https://github.com/keewis/grid-indexing/actions/workflows/rust-ci.yml/badge.svg?branch=main&event=push)](https://github.com/keewis/grid-indexing/actions/rust-ci.yml?query=branch%3Amain+event%3Apush)
+[![python ci](https://github.com/keewis/grid-indexing/actions/workflows/python-ci.yml/badge.svg?branch=main&event=push)](https://github.com/keewis/grid-indexing/actions/python-ci.yml?query=branch%3Amain+event%3Apush)
 [![PyPI version](https://img.shields.io/pypi/v/grid-indexing.svg)](https://pypi.org/project/grid-indexing)
 [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
