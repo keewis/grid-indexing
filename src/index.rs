@@ -61,12 +61,16 @@ impl CellRTree {
 mod tests {
     use super::*;
 
-    use geo::{LineString, Polygon};
+    use geo::{coord, Coord, LineString, Polygon, Rect};
     use geoarrow::array::PolygonBuilder;
     use geoarrow::datatypes::Dimension;
 
+    fn bbox(ll: Coord, ur: Coord) -> Option<Polygon> {
+        Some(Rect::new(ll, ur).to_polygon())
+    }
+
     #[test]
-    fn create_from_polygon_array() {
+    fn test_create_from_polygon_array() {
         let polygon1 = Polygon::new(
             LineString::from(vec![
                 (-5.0, 0.0),
@@ -95,6 +99,36 @@ mod tests {
         let _ = builder.push_polygon(Some(&polygon2));
         let array: PolygonArray = builder.finish();
 
-        let _index = CellRTree::create(array);
+        let index = CellRTree::create(array);
+
+        assert_eq!(index.tree.size(), 2);
+    }
+
+    #[test]
+    fn test_empty() {
+        let index = CellRTree::empty();
+        assert_eq!(index.tree.size(), 0);
+    }
+
+    #[test]
+    fn test_size() {
+        assert_eq!(CellRTree::empty().size(), 0);
+
+        let array1 = PolygonArray::from((
+            vec![bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0})],
+            Dimension::XY,
+        ));
+        assert_eq!(CellRTree::create(array1).size(), 1);
+
+        let array2 = PolygonArray::from((
+            vec![
+                bbox(coord! {x:0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x:1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+                bbox(coord! {x:0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x:1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+            ],
+            Dimension::XY,
+        ));
+        assert_eq!(CellRTree::create(array2).size(), 4);
     }
 }
