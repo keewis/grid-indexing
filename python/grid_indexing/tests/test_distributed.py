@@ -8,7 +8,7 @@ import numpy as np
 import shapely
 import shapely.testing
 
-from grid_indexing import Index
+from grid_indexing import RTree
 from grid_indexing.distributed import (
     ChunkGrid,
     DistributedRTree,
@@ -216,7 +216,7 @@ class TestDistributedRTree:
         source_grid = example_grid.reshape(2, 2)
         chunked_polygons = da.from_array(source_grid, chunks=(2, 1))
 
-        index = Index.from_shapely(source_grid.flatten())
+        index = RTree.from_shapely(source_grid.flatten())
         distributed_index = DistributedRTree(chunked_polygons)
 
         chunked_query = da.from_array(example_query, chunks=chunks)

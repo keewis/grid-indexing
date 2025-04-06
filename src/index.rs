@@ -1,54 +1,17 @@
-use bincode::{deserialize, serialize};
-use std::ops::Deref;
-
 use geo::{Polygon, Relate};
-use geoarrow::array::{ArrayBase, PolygonArray};
+use geoarrow::array::PolygonArray;
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
-use pyo3::exceptions::PyRuntimeError;
-use pyo3::intern;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyType};
-use pyo3_arrow::PyArray;
-use rstar::{primitives::CachedEnvelope, RTree, RTreeObject};
+use rstar::{RTree, RTreeObject};
 use serde::{Deserialize, Serialize};
 
-use super::trait_::{AsPolygonArray, AsSparse};
+use super::rtreeobject::NumberedCell;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct NumberedCell {
-    index: usize,
-    envelope: CachedEnvelope<Polygon>,
-}
-
-impl NumberedCell {
-    pub fn new(idx: usize, geom: Polygon) -> Self {
-        NumberedCell {
-            index: idx,
-            envelope: CachedEnvelope::<Polygon>::new(geom),
-        }
-    }
-
-    pub fn geometry(&self) -> &Polygon {
-        self.envelope.deref()
-    }
-}
-
-impl RTreeObject for NumberedCell {
-    type Envelope = <CachedEnvelope<Polygon> as RTreeObject>::Envelope;
-
-    fn envelope(&self) -> Self::Envelope {
-        self.envelope.envelope()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[pyclass]
-#[pyo3(module = "grid_indexing")]
-pub struct Index {
+pub struct CellRTree {
     tree: RTree<NumberedCell>,
 }
 
-impl Index {
+impl CellRTree {
     pub fn create(cell_geoms: PolygonArray) -> Self {
         let cells: Vec<_> = cell_geoms
             .iter()
@@ -57,9 +20,17 @@ impl Index {
             .map(|c| NumberedCell::new(c.0, c.1.to_geo()))
             .collect();
 
-        Index {
+        CellRTree {
             tree: RTree::bulk_load_with_params(cells),
         }
+    }
+
+    pub fn empty() -> Self {
+        CellRTree { tree: RTree::new() }
+    }
+
+    pub fn size(&self) -> usize {
+        self.tree.size()
     }
 
     fn overlaps_one(&self, cell: Polygon) -> Vec<usize> {
@@ -73,7 +44,7 @@ impl Index {
                 // (no touching)
                 relate.is_intersects() && !relate.is_touches()
             })
-            .map(|match_| match_.index)
+            .map(|match_| match_.index())
             .collect()
     }
 
@@ -86,84 +57,34 @@ impl Index {
     }
 }
 
-#[pyfunction]
-pub fn create_empty() -> Index {
-    Index { tree: RTree::new() }
-}
-
-#[pymethods]
-impl Index {
-    #[new]
-    pub fn new(source_cells: PyArray) -> PyResult<Self> {
-        let polygons = source_cells.into_polygon_array();
-
-        polygons.map(Index::create)
-    }
-
-    pub fn __setstate__(&mut self, state: &[u8]) -> PyResult<()> {
-        // Deserialize the data contained in the PyBytes object
-        // and update the struct with the deserialized values.
-        *self = deserialize(state).map_err(|err| PyRuntimeError::new_err(err.to_string()))?;
-
-        Ok(())
-    }
-
-    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        // Serialize the struct and return a PyBytes object
-        // containing the serialized data.
-        let serialized = serialize(&self).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
-        let bytes = PyBytes::new(py, &serialized);
-        Ok(bytes)
-    }
-
-    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject, PyObject)> {
-        let create = py.import("grid_indexing")?.getattr("create_empty")?;
-        let args = ();
-        let state = self.__getstate__(py)?;
-
-        Ok((
-            create.into_pyobject(py)?.unbind().into_any(),
-            args.into_pyobject(py)?.unbind().into_any(),
-            state.into_pyobject(py)?.unbind().into_any(),
-        ))
-    }
-
-    #[classmethod]
-    pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<PyAny>) -> PyResult<Self> {
-        let array = Python::with_gil(|py| {
-            let geoarrow = PyModule::import(py, "geoarrow.rust.core")?;
-            let crs = intern!(py, "epsg:4326");
-
-            let kwargs = [("crs", crs)].into_py_dict(py)?;
-
-            let pyobj = geoarrow
-                .getattr("from_shapely")?
-                .call((geoms,), Some(&kwargs))?;
-
-            PyArray::extract_bound(&pyobj)
-        })?;
-
-        Self::new(array)
-    }
-
-    pub fn query_overlap(&self, target_cells: PyArray) -> PyResult<Py<PyAny>> {
-        let polygons = target_cells.into_polygon_array()?;
-
-        self.overlaps(&polygons)
-            .into_sparse((polygons.len(), self.tree.size()))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use geo::{LineString, Polygon};
+    use geo::{coord, Coord, LineString, Polygon, Rect};
     use geoarrow::array::PolygonBuilder;
     use geoarrow::datatypes::Dimension;
 
+    fn bbox(ll: Coord, ur: Coord) -> Option<Polygon> {
+        Some(Rect::new(ll, ur).to_polygon())
+    }
+
+    fn polygon(exterior: Vec<(f64, f64)>) -> Option<Polygon> {
+        Some(Polygon::new(LineString::from(exterior), vec![]))
+    }
+
+    fn normalize_result(result: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+        result
+            .into_iter()
+            .map(|mut v| {
+                v.sort();
+                v
+            })
+            .collect::<Vec<_>>()
+    }
+
     #[test]
-    fn create_from_polygon_array() {
+    fn test_create_from_polygon_array() {
         let polygon1 = Polygon::new(
             LineString::from(vec![
                 (-5.0, 0.0),
@@ -192,6 +113,125 @@ mod tests {
         let _ = builder.push_polygon(Some(&polygon2));
         let array: PolygonArray = builder.finish();
 
-        let _index = Index::create(array);
+        let index = CellRTree::create(array);
+
+        assert_eq!(index.tree.size(), 2);
+    }
+
+    #[test]
+    fn test_empty() {
+        let index = CellRTree::empty();
+        assert_eq!(index.tree.size(), 0);
+    }
+
+    #[test]
+    fn test_size() {
+        assert_eq!(CellRTree::empty().size(), 0);
+
+        let array1 = PolygonArray::from((
+            vec![bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0})],
+            Dimension::XY,
+        ));
+        assert_eq!(CellRTree::create(array1).size(), 1);
+
+        let array2 = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+            ],
+            Dimension::XY,
+        ));
+        assert_eq!(CellRTree::create(array2).size(), 4);
+    }
+
+    /// check the basic functionality of the overlap search
+    #[test]
+    fn test_overlaps_rectilinear() {
+        let source = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+            ],
+            Dimension::XY,
+        ));
+        let index = CellRTree::create(source);
+
+        let target = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.2, y: 0.0}, coord! {x: 1.5, y: 1.0}),
+                bbox(coord! {x: 0.6, y: 1.2}, coord! {x: 0.9, y: 1.8}),
+                bbox(coord! {x: 0.3, y: 0.2}, coord! {x: 1.3, y: 1.6}),
+                bbox(coord! {x: 2.1, y: 2.3}, coord! {x: 2.7, y: 3.1}),
+            ],
+            Dimension::XY,
+        ));
+        let actual = index.overlaps(&target);
+        let expected: Vec<Vec<usize>> = vec![vec![0, 1], vec![2], vec![0, 1, 2, 3], vec![]];
+        assert_eq!(normalize_result(actual), expected);
+    }
+
+    /// check touches
+    #[test]
+    fn test_overlaps_touches() {
+        let source = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+            ],
+            Dimension::XY,
+        ));
+        let index = CellRTree::create(source);
+
+        let target = PolygonArray::from((
+            vec![
+                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+                bbox(coord! {x: 2.0, y: 0.0}, coord! {x: 3.0, y: 1.0}),
+            ],
+            Dimension::XY,
+        ));
+        let actual = index.overlaps(&target);
+        let expected: Vec<Vec<usize>> = vec![vec![], vec![]];
+        assert_eq!(normalize_result(actual), expected);
+    }
+
+    /// check that the additional filter works properly
+    #[test]
+    fn test_overlaps_tilted() {
+        let source = PolygonArray::from((
+            vec![
+                polygon(vec![
+                    (0.0, 0.0),
+                    (1.0, 0.0),
+                    (1.5, 1.0),
+                    (0.5, 1.0),
+                    (0.0, 0.0),
+                ]),
+                polygon(vec![
+                    (1.0, 0.0),
+                    (2.0, 0.0),
+                    (2.5, 1.0),
+                    (1.5, 1.0),
+                    (1.0, 0.0),
+                ]),
+            ],
+            Dimension::XY,
+        ));
+        let index = CellRTree::create(source);
+
+        let target = PolygonArray::from((
+            vec![
+                bbox(coord! {x: -1.0, y: 0.8}, coord! {x: 0.2, y: 1.5}),
+                bbox(coord! {x: 2.4, y: 0.9}, coord! {x: 3.0, y: 2.0}),
+            ],
+            Dimension::XY,
+        ));
+
+        let actual = index.overlaps(&target);
+        let expected: Vec<Vec<usize>> = vec![vec![], vec![1]];
+        assert_eq!(normalize_result(actual), expected);
     }
 }
