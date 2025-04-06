@@ -6,7 +6,7 @@ use pyo3::types::IntoPyDict;
 use pyo3_arrow::PyArray;
 
 pub trait AsSparse {
-    fn into_sparse(self, shape: (usize, usize)) -> PyResult<PyObject>;
+    fn into_sparse(self, shape: (usize, usize), final_shape: Vec<&usize>) -> PyResult<PyObject>;
 }
 
 fn index_pointer<T>(array: &[Vec<T>]) -> Vec<usize> {
@@ -23,7 +23,7 @@ fn index_pointer<T>(array: &[Vec<T>]) -> Vec<usize> {
 }
 
 impl AsSparse for Vec<Vec<usize>> {
-    fn into_sparse(self, shape: (usize, usize)) -> PyResult<PyObject> {
+    fn into_sparse(self, shape: (usize, usize), final_shape: Vec<&usize>) -> PyResult<PyObject> {
         let counts: Vec<i64> = index_pointer(&self).into_iter().map(|v| v as i64).collect();
         let indices: Vec<i64> = self.into_iter().flatten().map(|v| v as i64).collect();
         let data = [true].repeat(indices.len());
@@ -42,7 +42,12 @@ impl AsSparse for Vec<Vec<usize>> {
             ]
             .into_py_dict(py)?;
 
-            Ok(sparse.getattr("GCXS")?.call(args, Some(&kwargs))?.unbind())
+            Ok(sparse
+                .getattr("GCXS")?
+                .call(args, Some(&kwargs))?
+                .getattr("reshape")?
+                .call1((final_shape,))?
+                .unbind())
         })
     }
 }

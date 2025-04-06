@@ -26,7 +26,7 @@ def create_cells(x, y):
     return shapely.polygons(vertices)
 
 
-def test_create_index_from_shapely():
+def test_create_index_from_geoarrow():
     x = np.linspace(-10, 10, 6)
     y = np.linspace(40, 60, 4)
 
@@ -36,11 +36,11 @@ def test_create_index_from_shapely():
     assert isinstance(index, RTree)
 
 
-def test_create_index_geoarrow():
+def test_create_index_from_shapely():
     x = np.linspace(-10, 10, 6)
     y = np.linspace(40, 60, 4)
 
-    cells = create_cells(x, y).flatten()
+    cells = create_cells(x, y)
 
     index = RTree.from_shapely(cells)
     assert isinstance(index, RTree)
