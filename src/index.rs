@@ -1,27 +1,17 @@
-use bincode::{deserialize, serialize};
-
 use geo::{Polygon, Relate};
-use geoarrow::array::{ArrayBase, PolygonArray};
+use geoarrow::array::PolygonArray;
 use geoarrow::trait_::{ArrayAccessor, NativeScalar};
-use pyo3::exceptions::PyRuntimeError;
-use pyo3::intern;
-use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict, PyBytes, PyType};
-use pyo3_arrow::PyArray;
 use rstar::{RTree, RTreeObject};
 use serde::{Deserialize, Serialize};
 
 use super::rtreeobject::NumberedCell;
-use super::trait_::{AsPolygonArray, AsSparse};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[pyclass]
-#[pyo3(module = "grid_indexing")]
-pub struct Index {
+pub struct CellRTree {
     tree: RTree<NumberedCell>,
 }
 
-impl Index {
+impl CellRTree {
     pub fn create(cell_geoms: PolygonArray) -> Self {
         let cells: Vec<_> = cell_geoms
             .iter()
@@ -30,9 +20,17 @@ impl Index {
             .map(|c| NumberedCell::new(c.0, c.1.to_geo()))
             .collect();
 
-        Index {
+        CellRTree {
             tree: RTree::bulk_load_with_params(cells),
         }
+    }
+
+    pub fn empty() -> Self {
+        CellRTree { tree: RTree::new() }
+    }
+
+    pub fn size(&self) -> usize {
+        self.tree.size()
     }
 
     fn overlaps_one(&self, cell: Polygon) -> Vec<usize> {
@@ -56,74 +54,6 @@ impl Index {
             .flatten()
             .map(|cell| self.overlaps_one(cell.to_geo()))
             .collect()
-    }
-}
-
-#[pyfunction]
-pub fn create_empty() -> Index {
-    Index { tree: RTree::new() }
-}
-
-#[pymethods]
-impl Index {
-    #[new]
-    pub fn new(source_cells: PyArray) -> PyResult<Self> {
-        let polygons = source_cells.into_polygon_array();
-
-        polygons.map(Index::create)
-    }
-
-    pub fn __setstate__(&mut self, state: &[u8]) -> PyResult<()> {
-        // Deserialize the data contained in the PyBytes object
-        // and update the struct with the deserialized values.
-        *self = deserialize(state).map_err(|err| PyRuntimeError::new_err(err.to_string()))?;
-
-        Ok(())
-    }
-
-    pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        // Serialize the struct and return a PyBytes object
-        // containing the serialized data.
-        let serialized = serialize(&self).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
-        let bytes = PyBytes::new(py, &serialized);
-        Ok(bytes)
-    }
-
-    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject, PyObject)> {
-        let create = py.import("grid_indexing")?.getattr("create_empty")?;
-        let args = ();
-        let state = self.__getstate__(py)?;
-
-        Ok((
-            create.into_pyobject(py)?.unbind().into_any(),
-            args.into_pyobject(py)?.unbind().into_any(),
-            state.into_pyobject(py)?.unbind().into_any(),
-        ))
-    }
-
-    #[classmethod]
-    pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<PyAny>) -> PyResult<Self> {
-        let array = Python::with_gil(|py| {
-            let geoarrow = PyModule::import(py, "geoarrow.rust.core")?;
-            let crs = intern!(py, "epsg:4326");
-
-            let kwargs = [("crs", crs)].into_py_dict(py)?;
-
-            let pyobj = geoarrow
-                .getattr("from_shapely")?
-                .call((geoms,), Some(&kwargs))?;
-
-            PyArray::extract_bound(&pyobj)
-        })?;
-
-        Self::new(array)
-    }
-
-    pub fn query_overlap(&self, target_cells: PyArray) -> PyResult<Py<PyAny>> {
-        let polygons = target_cells.into_polygon_array()?;
-
-        self.overlaps(&polygons)
-            .into_sparse((polygons.len(), self.tree.size()))
     }
 }
 
@@ -165,6 +95,6 @@ mod tests {
         let _ = builder.push_polygon(Some(&polygon2));
         let array: PolygonArray = builder.finish();
 
-        let _index = Index::create(array);
+        let _index = CellRTree::create(array);
     }
 }
