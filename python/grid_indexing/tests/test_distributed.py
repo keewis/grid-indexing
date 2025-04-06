@@ -216,15 +216,17 @@ class TestDistributedRTree:
         source_grid = example_grid.reshape(2, 2)
         chunked_polygons = da.from_array(source_grid, chunks=(2, 1))
 
-        index = RTree.from_shapely(source_grid.flatten())
+        index = RTree.from_shapely(source_grid)
         distributed_index = DistributedRTree(chunked_polygons)
 
         chunked_query = da.from_array(example_query, chunks=chunks)
+
+        expected = index.query_overlap(
+            geoarrow.from_shapely(example_query), example_query.shape
+        )
         expected_shape = chunked_query.shape + chunked_polygons.shape
 
-        expected = np.reshape(
-            index.query_overlap(geoarrow.from_shapely(example_query)), expected_shape
-        )
         [actual] = dask.compute(distributed_index.query_overlap(chunked_query))
 
+        assert actual.shape == expected_shape
         np.testing.assert_equal(actual.todense(), expected.todense())

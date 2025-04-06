@@ -15,22 +15,13 @@ def _chunk_boundaries(chunk):
     return shapely.minimum_rotated_rectangle(union)
 
 
-def _index_from_shapely(chunk):
-    return RTree(ga.from_shapely(chunk.flatten()))
-
-
 def _empty_chunk(index, chunk, shape):
     arr = sparse.full(shape=shape, fill_value=False, dtype=bool)
     return sparse.GCXS.from_coo(arr)
 
 
 def _query_overlap(index, chunk, shape):
-    result = index.query_overlap(ga.from_shapely(chunk.flatten()))
-
-    if result.nnz == 0:
-        return _empty_chunk(index, chunk, shape)
-
-    return np.reshape(result, shape)
+    return index.query_overlap(ga.from_shapely(chunk.flatten()), chunk.shape)
 
 
 def _infer_chunksizes(arr):
@@ -99,7 +90,7 @@ class DistributedRTree:
             dask.delayed(_chunk_boundaries), flatten=True
         ).compute()
 
-        self.chunk_indexes = self.source_grid.map(dask.delayed(_index_from_shapely))
+        self.chunk_indexes = self.source_grid.map(dask.delayed(RTree.from_shapely))
         self.index = RTree.from_shapely(np.array(boundaries))
 
     def query_overlap(self, geoms):
