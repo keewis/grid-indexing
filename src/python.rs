@@ -3,11 +3,12 @@ use super::trait_::{AsPolygonArray, AsSparse};
 use bincode::{deserialize, serialize};
 use geoarrow::array::ArrayBase;
 use numpy::{PyArrayDyn, PyUntypedArrayMethods};
-use pyo3::exceptions::PyRuntimeError;
+use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::intern;
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyTuple, PyType};
 use pyo3_arrow::PyArray;
+use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 
@@ -24,6 +25,27 @@ pub fn create_empty() -> RTree {
     RTree {
         tree: CellRTree::empty(),
         shape: vec![],
+    }
+}
+
+enum QueryMode {
+    Overlaps,
+}
+
+impl<T> TryFrom<Option<T>> for QueryMode
+where
+    T: Deref<Target = str>,
+{
+    type Error = PyErr;
+
+    fn try_from(value: Option<T>) -> PyResult<Self> {
+        match value.as_deref() {
+            None | Some("overlaps") => Ok(Self::Overlaps),
+            Some(value) => Err(PyValueError::new_err(format!(
+                "Unknown query mode: {}",
+                value
+            ))),
+        }
     }
 }
 
@@ -116,5 +138,17 @@ impl RTree {
         self.tree
             .overlaps(&polygons)
             .into_sparse(intermediate_shape, final_shape)
+    }
+
+    #[pyo3(signature=(target_cells, *, shape=None, method=None))]
+    pub fn query(
+        &self,
+        target_cells: PyArray,
+        shape: Option<&Bound<PyTuple>>,
+        method: Option<String>,
+    ) -> PyResult<Py<PyAny>> {
+        match QueryMode::try_from(method)? {
+            QueryMode::Overlaps => self.query_overlap(target_cells, shape),
+        }
     }
 }
