@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 try:
-    __version__ = version("xdggs")
+    __version__ = version("grid-indexing")
 except PackageNotFoundError:  # noqa # pragma: no cover
     # package is not installed
     __version__ = "9999"
