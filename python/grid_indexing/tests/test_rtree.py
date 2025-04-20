@@ -77,3 +77,21 @@ def test_pickle():
     assert isinstance(recreated, RTree)
     # TODO: compare the index
     # assert index == recreated
+
+
+def test_query():
+    source_cells = create_cells(np.linspace(-10, 10, 6), np.linspace(40, 60, 4))
+    target_cells = source_cells
+
+    index = RTree.from_shapely(source_cells)
+    actual = index.query(
+        geoarrow.from_shapely(target_cells.flatten()),
+        shape=target_cells.shape,
+        method="overlaps",
+    )
+
+    assert isinstance(actual, sparse.GCXS)
+    sum_ = np.sum(actual, axis=(1, 2)).todense()
+    assert np.all(
+        np.isin(sum_, np.array([1, 4, 6, 9]))
+    ), "unexpected number of cells found"

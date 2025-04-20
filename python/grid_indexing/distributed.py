@@ -142,3 +142,9 @@ class DistributedRTree:
                 output_chunks[indices] = chunk
 
         return da.block(output_chunks.tolist())
+
+    def query(self, geoms, *, method):
+        if method == "overlaps":
+            return self.query_overlap(geoms)
+        else:
+            raise ValueError(f"unknown query mode: {method}")
