@@ -1,0 +1,25 @@
+version: 2
+
+build:
+  os: ubuntu-lts-latest
+  tools:
+    python: mambaforge-latest
+  jobs:
+    post_checkout:
+      - (git --no-pager log --pretty="tformat:%s" -1 | grep -vqF "[skip-rtd]") || exit 183
+      - git fetch --unshallow || true
+    pre_install:
+      - git update-index --assume-unchanged docs/conf.py ci/docs.yml
+    install:
+      - env
+      - mamba create --quiet --name docs python=3.13
+      - mamba env update --quiet --name docs --file ci/requirements/environment.yaml
+      - mamba env update --quiet --name docs --file ci/requirements/docs.yaml
+    post_install:
+      - maturin develop
+
+sphinx:
+  fail_on_warning: true
+  configuration: docs/conf.py
+
+formats: []
