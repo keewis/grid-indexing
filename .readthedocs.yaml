@@ -16,8 +16,10 @@ build:
     pre_install:
       - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
     install:
-      - PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
-        mamba run --name $CONDA_DEFAULT_ENV maturin develop
+      - mamba run
+        -e PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
+        --name $CONDA_DEFAULT_ENV
+        maturin develop
 
 conda:
   environment: ci/requirements/docs.yaml
