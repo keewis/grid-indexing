@@ -24,6 +24,11 @@ build:
     pre_install:
       - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
     install:
+      - mamba list --prefix "$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV"
+      - PKG_CONFIG_PATH="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV/lib/pkgconfig"
+        PKG_CONFIG_ALLOW_SYSTEM_LIBS=1
+        PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
+        pkg-config --libs --cflags proj 'proj >= 9.2.0'
       - mamba run
         -e PKG_CONFIG_PATH="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV/lib/pkgconfig"
         --prefix "$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV"
