@@ -11,13 +11,13 @@ build:
       - git fetch --unshallow || true
     pre_install:
       - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
-    install:
-      - env
+    create_environment:
       - mamba create --quiet --name $CONDA_DEFAULT_ENV python=3.13
       - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/environment.yaml
       - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/docs.yaml
-    post_install:
-      - conda activate "$CONDA_DEFAULT_ENV" && maturin develop
+    install:
+      - env
+      - maturin develop
 
 conda:
   environment: ci/requirements/docs.yaml
