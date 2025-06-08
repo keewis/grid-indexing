@@ -9,12 +9,12 @@ build:
     post_checkout:
       - (git --no-pager log --pretty="tformat:%s" -1 | grep -vqF "[skip-rtd]") || exit 183
       - git fetch --unshallow || true
-    pre_install:
-      - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
     create_environment:
       - mamba create --quiet --name $CONDA_DEFAULT_ENV python=3.13
       - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/environment.yaml
       - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/docs.yaml
+    pre_install:
+      - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
     install:
       - env
       - maturin develop
