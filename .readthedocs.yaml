@@ -13,9 +13,9 @@ build:
       - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
     install:
       - env
-      - mamba create --quiet --name docs python=3.13
-      - mamba env update --quiet --name docs --file ci/requirements/environment.yaml
-      - mamba env update --quiet --name docs --file ci/requirements/docs.yaml
+      - mamba create --quiet --name $CONDA_DEFAULT_ENV python=3.13
+      - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/environment.yaml
+      - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/docs.yaml
     post_install:
       - maturin develop
 
