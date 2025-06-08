@@ -1,0 +1,8 @@
+# grid-indexing
+
+```{toctree}
+---
+maxdepth: 2
+caption: Contents:
+---
+```
