@@ -17,7 +17,7 @@ build:
       - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/environment.yaml
       - mamba env update --quiet --name $CONDA_DEFAULT_ENV --file ci/requirements/docs.yaml
     post_install:
-      - maturin develop
+      - mamba activate "$CONDA_DEFAULT_ENV" && maturin develop
 
 conda:
   environment: ci/requirements/docs.yaml
