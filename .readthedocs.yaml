@@ -19,6 +19,9 @@ build:
     post_install:
       - maturin develop
 
+conda:
+  environment: ci/requirements/docs.yaml
+
 sphinx:
   fail_on_warning: true
   configuration: docs/conf.py
