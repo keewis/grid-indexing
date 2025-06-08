@@ -10,7 +10,7 @@ build:
       - (git --no-pager log --pretty="tformat:%s" -1 | grep -vqF "[skip-rtd]") || exit 183
       - git fetch --unshallow || true
     pre_install:
-      - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yml
+      - git update-index --assume-unchanged docs/conf.py ci/requirements/docs.yaml
     install:
       - env
       - mamba create --quiet --name docs python=3.13
