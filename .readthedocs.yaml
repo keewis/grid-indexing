@@ -12,7 +12,9 @@ build:
     pre_create_environment:
       - mamba update --quiet --name base conda mamba
     create_environment:
-      - mamba create --quiet --prefix "$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV" python=3.13
+      - export CONDA_PREFIX="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV";
+        unset "$CONDA_DEFAULT_ENV";
+        mamba create --quiet --prefix "$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV" python=3.13
       - mamba env update --quiet --prefix "$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV" --file ci/requirements/environment.yaml
       - mamba env update --quiet --prefix "$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV" --file ci/requirements/docs.yaml
     pre_install:
