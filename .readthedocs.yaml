@@ -34,7 +34,6 @@ build:
       - export CONDA_PREFIX_="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV"
         mamba run
         -e PKG_CONFIG_PATH="$CONDA_PREFIX_/lib/pkgconfig"
-        -e C_INCLUDE_DIR="$CONDA_PREFIX_/include"
         --prefix "$CONDA_PREFIX_"
         maturin develop
 
