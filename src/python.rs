@@ -188,6 +188,24 @@ impl RTree {
             .into_sparse(intermediate_shape, final_shape)
     }
 
+    /// query for the geometries
+    ///
+    /// Parameters
+    /// ----------
+    /// target_cells : arrow-array
+    ///     The target geometries as a geoarrow polygon array, in EPSG:4326
+    ///     coordinates. The longitude convention can be either 0° to 360° or
+    ///     -180° to 180°, and it is the user's responsibility to ensure
+    ///     consistency.
+    /// shape : tuple of int, optional
+    ///     The shape of the input array. This is necessary to pass the shape of
+    ///     a 2D field of geometries, as geoarrow does not support 2D arrays
+    ///     (yet?).
+    ///
+    ///     If omitted / ``None``, a 1D array will be assumed.
+    /// method : {"overlaps"}, default: "overlaps"
+    ///     The query method. For now, can be only ``"overlaps"``, but more are
+    ///     planned (for example, ``"nearest_neighbour"`` or ``"bilinear"``).
     #[pyo3(signature=(target_cells, *, shape=None, method=None))]
     pub fn query(
         &self,
