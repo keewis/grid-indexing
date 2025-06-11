@@ -15,13 +15,13 @@ In-memory
 ---------
 
 .. autosummary::
-   :toctree: generate/
+   :toctree: generated/
 
    RTree
 
 Distributed
 -----------
 .. autosummary::
-   :toctree: generate/
+   :toctree: generated/
 
    distributed.DistributedRTree
