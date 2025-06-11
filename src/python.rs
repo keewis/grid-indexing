@@ -117,6 +117,18 @@ impl RTree {
         ))
     }
 
+    /// construct a RTree from a array of shapely geometries
+    ///
+    /// Parameters
+    /// ----------
+    /// geoms : array-like
+    ///     The array of shapely geometries. Can be 1D or 2D, but must be
+    ///     something :py:func:`geoarrow.rust.core.from_shapely` can handle.
+    ///
+    /// Returns
+    /// -------
+    /// rtree : RTree
+    ///     The :py:class:`RTree` instance.
     #[classmethod]
     pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<'_, PyAny>) -> PyResult<Self> {
         Python::with_gil(|py| {
