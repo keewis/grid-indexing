@@ -168,6 +168,13 @@ impl RTree {
     ///     (yet?).
     ///
     ///     If omitted / ``None``, a 1D array will be assumed.
+    ///
+    /// Returns
+    /// -------
+    /// overlaps : sparse-array
+    ///     The result of the query as a sparse array (in GCXS format), with the
+    ///     number of dimensions being the combination of source and target
+    ///     arrays.
     #[pyo3(signature=(target_cells, shape=None))]
     pub fn query_overlap(
         &self,
@@ -206,6 +213,13 @@ impl RTree {
     /// method : {"overlaps"}, default: "overlaps"
     ///     The query method. For now, can be only ``"overlaps"``, but more are
     ///     planned (for example, ``"nearest_neighbour"`` or ``"bilinear"``).
+    ///
+    /// Returns
+    /// -------
+    /// result : sparse-array
+    ///     The result of the query as a sparse array (in GCXS format), with the
+    ///     number of dimensions being the combination of source and target
+    ///     arrays.
     #[pyo3(signature=(target_cells, *, shape=None, method=None))]
     pub fn query(
         &self,
