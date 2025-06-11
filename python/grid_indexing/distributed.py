@@ -81,6 +81,29 @@ class ChunkGrid:
 
 
 class DistributedRTree:
+    """A distributed geospatial RTree implementation
+
+    This behaves exactly the same as :py:class:`RTree`, except that it consumes
+    chunked arrays (currently only ``dask``) and performs an exact search
+    without loading the entire array into memory.
+
+    .. note::
+
+       This computes the boundaries of each chunk eagerly.
+
+    Parameters
+    ----------
+    geoms : array-like
+        The source geometries as a chunked array of shapely polygons, in
+        EPSG:4326 coordinates. The longitude convention can be either 0° to 360°
+        or -180° to 180°, and it is the user's responsibility to ensure
+        consistency.
+
+    See Also
+    --------
+    RTree
+    """
+
     def __init__(self, geoms):
         import dask
 
