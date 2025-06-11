@@ -188,7 +188,7 @@ impl RTree {
             .into_sparse(intermediate_shape, final_shape)
     }
 
-    /// query for the geometries
+    /// query for geometries
     ///
     /// Parameters
     /// ----------
