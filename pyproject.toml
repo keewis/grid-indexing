@@ -30,6 +30,12 @@ distributed = [
 tests = [
   "pytest",
 ]
+docs = [
+  "sphinx",
+  "pydata-sphinx-theme",
+  "myst-parser",
+  "jupyter-sphinx",
+]
 
 [tool.maturin]
 python-source = "python"
@@ -91,3 +97,6 @@ exclude_lines = ["pragma: no cover", "if TYPE_CHECKING"]
 extend-ignore-words-re = [
   "nd",
 ]
+
+[tool.typos.default.extend-identifiers]
+arro3 = "arro3"

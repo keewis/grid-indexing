@@ -12,6 +12,27 @@ use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 
+/// A geospatial RTree implementation
+///
+/// Based on the ``rstar`` rust crate, this class allows search for overlapping
+/// geometries (where "overlapping" refers to intersecting / containing but not
+/// touching).
+///
+/// Note that for now the search happens in the 2D cartesian space defined by
+/// the equirectangular ("PlateCarrée") projection. As such, the search
+/// will not return the correct results around poles or the dateline.
+///
+/// Parameters
+/// ----------
+/// source_cells : arrow-array
+///     The source geometries as a geoarrow polygon array, in EPSG:4326
+///     coordinates. The longitude convention can be either 0° to 360° or -180°
+///     to 180°, and it is the user's responsibility to ensure consistency.
+/// shape : tuple of int, optional
+///     The shape of the input array. This is necessary to keep the shape of a
+///     2D field of geometries, as geoarrow does not support 2D arrays (yet?).
+///
+///     If omitted / ``None``, a 1D array will be assumed.
 #[derive(Serialize, Deserialize, Debug)]
 #[pyclass]
 #[pyo3(module = "grid_indexing")]
@@ -96,6 +117,18 @@ impl RTree {
         ))
     }
 
+    /// construct a RTree from a array of shapely geometries
+    ///
+    /// Parameters
+    /// ----------
+    /// geoms : array-like
+    ///     The array of shapely geometries. Can be 1D or 2D, but must be
+    ///     something :py:func:`geoarrow.rust.core.from_shapely` can handle.
+    ///
+    /// Returns
+    /// -------
+    /// rtree : RTree
+    ///     The :py:class:`RTree` instance.
     #[classmethod]
     pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<'_, PyAny>) -> PyResult<Self> {
         Python::with_gil(|py| {
@@ -120,6 +153,28 @@ impl RTree {
         })
     }
 
+    /// query for overlapping geometries
+    ///
+    /// Parameters
+    /// ----------
+    /// target_cells : arrow-array
+    ///     The target geometries as a geoarrow polygon array, in EPSG:4326
+    ///     coordinates. The longitude convention can be either 0° to 360° or
+    ///     -180° to 180°, and it is the user's responsibility to ensure
+    ///     consistency.
+    /// shape : tuple of int, optional
+    ///     The shape of the input array. This is necessary to pass the shape of
+    ///     a 2D field of geometries, as geoarrow does not support 2D arrays
+    ///     (yet?).
+    ///
+    ///     If omitted / ``None``, a 1D array will be assumed.
+    ///
+    /// Returns
+    /// -------
+    /// overlaps : sparse-array
+    ///     The result of the query as a sparse array (in GCXS format), with the
+    ///     number of dimensions being the combination of source and target
+    ///     arrays.
     #[pyo3(signature=(target_cells, shape=None))]
     pub fn query_overlap(
         &self,
@@ -140,6 +195,31 @@ impl RTree {
             .into_sparse(intermediate_shape, final_shape)
     }
 
+    /// query for geometries
+    ///
+    /// Parameters
+    /// ----------
+    /// target_cells : arrow-array
+    ///     The target geometries as a geoarrow polygon array, in EPSG:4326
+    ///     coordinates. The longitude convention can be either 0° to 360° or
+    ///     -180° to 180°, and it is the user's responsibility to ensure
+    ///     consistency.
+    /// shape : tuple of int, optional
+    ///     The shape of the input array. This is necessary to pass the shape of
+    ///     a 2D field of geometries, as geoarrow does not support 2D arrays
+    ///     (yet?).
+    ///
+    ///     If omitted / ``None``, a 1D array will be assumed.
+    /// method : {"overlaps"}, default: "overlaps"
+    ///     The query method. For now, can be only ``"overlaps"``, but more are
+    ///     planned (for example, ``"nearest_neighbour"`` or ``"bilinear"``).
+    ///
+    /// Returns
+    /// -------
+    /// result : sparse-array
+    ///     The result of the query as a sparse array (in GCXS format), with the
+    ///     number of dimensions being the combination of source and target
+    ///     arrays.
     #[pyo3(signature=(target_cells, *, shape=None, method=None))]
     pub fn query(
         &self,

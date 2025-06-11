@@ -81,6 +81,29 @@ class ChunkGrid:
 
 
 class DistributedRTree:
+    """A distributed geospatial RTree implementation
+
+    This behaves exactly the same as :py:class:`RTree`, except that it consumes
+    chunked arrays (currently only ``dask``) and performs an exact search
+    without loading the entire array into memory.
+
+    .. note::
+
+       This computes the boundaries of each chunk eagerly.
+
+    Parameters
+    ----------
+    geoms : array-like
+        The source geometries as a chunked array of shapely polygons, in
+        EPSG:4326 coordinates. The longitude convention can be either 0° to 360°
+        or -180° to 180°, and it is the user's responsibility to ensure
+        consistency.
+
+    See Also
+    --------
+    RTree
+    """
+
     def __init__(self, geoms):
         import dask
 
@@ -94,6 +117,24 @@ class DistributedRTree:
         self.index = RTree.from_shapely(np.array(boundaries))
 
     def query_overlap(self, geoms):
+        """
+        query for overlapping geometries
+
+        Parameters
+        ----------
+        target_cells : array-like
+            The target geometries as a chunked array of shapely polygons, in EPSG:4326
+            coordinates. The longitude convention can be either 0° to 360° or
+            -180° to 180°, and it is the user's responsibility to ensure
+            consistency.
+
+        Returns
+        -------
+        overlaps : chunked-sparse-array
+            The result of the query as a chunked sparse array (in GCXS format),
+            with the number of dimensions being the combination of source and
+            target arrays.
+        """
         import dask
         import dask.array as da
 
@@ -144,6 +185,27 @@ class DistributedRTree:
         return da.block(output_chunks.tolist())
 
     def query(self, geoms, *, method):
+        """
+        query for overlapping geometries
+
+        Parameters
+        ----------
+        target_cells : array-like
+            The target geometries as a chunked array of shapely polygons, in EPSG:4326
+            coordinates. The longitude convention can be either 0° to 360° or
+            -180° to 180°, and it is the user's responsibility to ensure
+            consistency.
+        method : {"overlaps"}
+            The query method. For now, can be only ``"overlaps"``, but more are
+            planned (for example, ``"nearest_neighbour"`` or ``"bilinear"``).
+
+        Returns
+        -------
+        overlaps : chunked-sparse-array
+            The result of the query as a chunked sparse array (in GCXS format),
+            with the number of dimensions being the combination of source and
+            target arrays.
+        """
         if method == "overlaps":
             return self.query_overlap(geoms)
         else:

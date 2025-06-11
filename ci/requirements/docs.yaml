@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+dependencies:
+  - sphinx
+  - pydata-sphinx-theme
+  - myst-parser
+  - jupyter-sphinx
