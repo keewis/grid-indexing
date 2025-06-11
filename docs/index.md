@@ -7,4 +7,5 @@ caption: Contents:
 ---
 
 api
+glossary
 ```
