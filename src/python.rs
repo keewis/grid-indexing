@@ -12,6 +12,27 @@ use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 
+/// A geospatial RTree implementation
+///
+/// Based on the ``rstar`` rust crate, this class allows search for overlapping
+/// geometries (where "overlapping" refers to intersecting / containing but not
+/// touching).
+///
+/// Note that for now the search happens in the 2D cartesian space defined by
+/// the equirectangular ("PlateCarrée") projection. As such, the search
+/// will not return the correct results around poles or the dateline.
+///
+/// Parameters
+/// ----------
+/// source_cells : arrow-array
+///     The source geometries as a geoarrow polygon array, in EPSG:4326
+///     coordinates. The longitude convention can be either 0° to 360° or -180°
+///     to 180°, and it is the user's responsibility to ensure consistency.
+/// shape : tuple of int, optional
+///     The shape of the input array. This is necessary to keep the shape of a
+///     2D field of geometries, as geoarrow does not support 2D arrays (yet?).
+///
+///     If omitted / ``None``, a 1D array will be assumed.
 #[derive(Serialize, Deserialize, Debug)]
 #[pyclass]
 #[pyo3(module = "grid_indexing")]
