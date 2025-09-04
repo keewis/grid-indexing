@@ -114,7 +114,7 @@ jobs:
 
       - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
-        shell: bash{0}
+        shell: bash {0}
         run: |
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" - type f)
