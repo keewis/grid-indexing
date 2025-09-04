@@ -100,9 +100,10 @@ jobs:
 
       - name: Clean up pkg-config
         if: runner.os == 'Windows'
+        shell: bash {0}
         run: |
           # remove dependency paths
-          sed -i '/Requires.private:/d' $env:PKG_CONFIG_PATH/*.pc
+          sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
 
           # check that this actually works
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
