@@ -101,8 +101,6 @@ jobs:
       - name: Clean up pkg-config
         if: runner.os == 'Windows'
         run: |
-          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
-
           # remove dependency paths
           sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
 
@@ -112,8 +110,6 @@ jobs:
       - name: Install the package
         run: |
           env
-          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
-          export PYO3_PYTHON="${{env.PYO3_PYTHON}}"
 
           maturin develop
 
