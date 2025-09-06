@@ -125,7 +125,9 @@ jobs:
               cat ~/.bash_env
               source ~/.bash_env
           fi
+          echo "os: ${{ runner.os }}"
           echo "pkg-config path: $PKG_CONFIG_PATH"
+          find "$PKG_CONFIG_PATH" -name "*.pc" -type f
 
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" -type f)
