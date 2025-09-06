@@ -116,6 +116,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash {0}
         run: |
+          cat $GITHUB_ENV
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" - type f)
 
