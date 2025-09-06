@@ -102,8 +102,8 @@ jobs:
 
       - name: Clean up pkg-config
         if: runner.os == 'Windows'
-        run: |
-          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"  # zizmor: ignore[template-injection]
+        run: | # zizmor: ignore[template-injection]
+          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
 
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" -type f)
@@ -112,10 +112,10 @@ jobs:
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Install the package
-        run: |
+        run: | # zizmor: ignore[template-injection]
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-              export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"  # zizmor: ignore[template-injection]
-              export PYO3_PYTHON="${{ env.PYO3_PYTHON }}"  # zizmor: ignore[template-injection]
+              export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
+              export PYO3_PYTHON="${{ env.PYO3_PYTHON }}"
           fi
 
           maturin develop
