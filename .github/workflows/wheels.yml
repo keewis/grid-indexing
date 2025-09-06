@@ -43,13 +43,15 @@ jobs:
           #   manylinux: auto
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
-          sccache: "true"
+          sccache: "false"
           manylinux: ${{ matrix.manylinux }}
           before-script-linux: |
             sudo apt-get update
@@ -83,13 +85,15 @@ jobs:
             target: armv7
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
-          sccache: "true"
+          sccache: "false"
           manylinux: musllinux_1_2
           before-script-linux: |
             sudo apt-get update
@@ -117,17 +121,19 @@ jobs:
             target: x64
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: check installed libs
         run: |
           pkg-config --list-all
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
-          sccache: "true"
+          sccache: "false"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -146,17 +152,19 @@ jobs:
             target: aarch64
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: check installed libs
         run: |
           pkg-config --list-all
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
-          sccache: "true"
+          sccache: "false"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -212,4 +220,4 @@ jobs:
         with:
           subject-path: "dist/*.whl"
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
