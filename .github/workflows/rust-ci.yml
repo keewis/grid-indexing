@@ -106,7 +106,7 @@ jobs:
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-              echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> ~/.bash_env
+              echo "export PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> ~/.bash_env
           fi
 
       - name: Help the linker on macos
