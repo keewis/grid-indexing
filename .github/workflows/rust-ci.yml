@@ -10,12 +10,14 @@ concurrency:
   group: ${{ github.workflow }}.${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   detect-ci-trigger:
     name: detect ci trigger
     runs-on: ubuntu-latest
     if: |
-      github.repository == 'keewis/grid-indexing'
+      github.repository_owner == 'keewis'
       && (github.event_name == 'push' || github.event_name == 'pull_request')
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
@@ -23,8 +25,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 2
+          persist-credentials: false
 
-      - uses: xarray-contrib/ci-trigger@v1
+      - uses: xarray-contrib/ci-trigger@10cd2bfec3484946a4058a421ddf9cfad101e715 # v1.2.1
         id: detect-trigger
         with:
           keyword: "[skip-ci]"
@@ -43,10 +46,12 @@ jobs:
       matrix:
         os:
           - "ubuntu-latest"
-          # building proj-sys on windows appears to not really be possible
           - "windows-latest"
           - "macos-latest"
-        python-version: ["3.10", "3.12", "3.13"]
+        python-version:
+          - "3.10"
+          - "3.12"
+          - "3.13"
 
     env:
       FORCE_COLOR: 3
@@ -58,12 +63,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      # - name: Install Rust
+      #   uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # 1.0
+      #   with:
+      #     toolchain: stable
 
       - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@7f29b8b80078b1b601dfa018b0f7425c587c63bb # 2.0.6
         with:
           environment-name: rust-tests
           environment-file: ci/requirements/environment-rust.yaml
@@ -72,10 +81,10 @@ jobs:
           create-args: >-
             python=${{ matrix.python-version }}
 
-      - name: Create rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "py${{ matrix.python-version }}"
+      # - name: Create rust cache
+      #   uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # 2.8.0
+      #   with:
+      #     prefix-key: "py${{ matrix.python-version }}"
 
       - name: Help finding installed libraries
         run: |
@@ -98,8 +107,6 @@ jobs:
       - name: Help the linker on macos
         if: runner.os == 'MacOS'
         run: |
-          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
-
           mkdir -p target/debug/deps
           ln -s $CONDA_PREFIX/lib/*.dylib target/debug/deps/
 
@@ -108,22 +115,21 @@ jobs:
 
       - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
-        run: |
-          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
+        run: | # zizmor: ignore[template-injection]
+          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
 
           # remove dependency paths
-          sed -i '/Requires.private:/d' $PKG_CONFIG_PATH/*.pc
-
-          ls -l ${{env.PYO3_PYTHON}}
-          ls -l $CONDA_PREFIX
+          sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" -type f)
 
           # check that this actually works
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Run tests
-        run: |
-          export PKG_CONFIG_PATH="${{env.PKG_CONFIG_PATH}}"
-          export PYO3_PYTHON="${{env.PYO3_PYTHON}}"
+        run: | # zizmor: ignore[template-injection]
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+              export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
+              export PYO3_PYTHON="${{ env.PYO3_PYTHON }}"
+          fi
 
           cargo build --tests --keep-going
           cargo test --no-fail-fast
@@ -146,14 +152,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # 1.0
         with:
+          toolchain: stable
           components: rustfmt, clippy
 
       - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@7f29b8b80078b1b601dfa018b0f7425c587c63bb # 2.0.6
         with:
           environment-name: rust-tests
           environment-file: ci/requirements/environment-rust.yaml
@@ -163,7 +172,7 @@ jobs:
             python=${{ matrix.python-version }}
 
       - name: Create rust cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # 2.8.0
 
       - name: Cargo clippy
         run: |
