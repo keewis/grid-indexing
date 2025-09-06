@@ -111,7 +111,6 @@ jobs:
 
       - name: Help the linker on macos
         if: runner.os == 'MacOS'
-        shell: bash {0}
         run: |
           mkdir -p target/debug/deps
           ln -s $CONDA_PREFIX/lib/*.dylib target/debug/deps/
@@ -121,7 +120,6 @@ jobs:
 
       - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
-        shell: bash {0}
         run: |
           if [[ -f "~/.bash_env" ]]; then
               cat ~/.bash_env
