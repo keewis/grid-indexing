@@ -128,7 +128,7 @@ jobs:
           echo "pkg-config path: $PKG_CONFIG_PATH"
 
           # remove dependency paths
-          sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" - type f)
+          sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" -type f)
 
           # check that this actually works
           pkg-config --libs --cflags proj 'proj >= 9.4.0'
