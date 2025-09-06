@@ -120,7 +120,7 @@ jobs:
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" - type f)
 
           # check that this actually works
-          #pkg-config --libs --cflags proj 'proj >= 9.4.0'
+          pkg-config --libs --cflags proj 'proj >= 9.4.0'
 
       - name: Run tests
         run: |
