@@ -5,3 +5,6 @@ rules:
       - python-ci.yml:106
       - python-ci.yml:117
       - python-ci.yml:118
+      - rust-ci.yml:120
+      - rust-ci.yml:131
+      - rust-ci.yml:132

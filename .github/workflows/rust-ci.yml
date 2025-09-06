@@ -105,10 +105,6 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-              echo "export PKG_CONFIG_PATH='$PKG_CONFIG_PATH'" >> ~/.bash_env
-          fi
-
       - name: Help the linker on macos
         if: runner.os == 'MacOS'
         run: |
@@ -121,13 +117,7 @@ jobs:
       - name: Clean up pkg-config on windows
         if: runner.os == 'Windows'
         run: |
-          if [[ -f "~/.bash_env" ]]; then
-              cat ~/.bash_env
-              source ~/.bash_env
-          fi
-          echo "os: ${{ runner.os }}"
-          echo "pkg-config path: $PKG_CONFIG_PATH"
-          find "$PKG_CONFIG_PATH" -name "*.pc" -type f
+          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
 
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" -type f)
@@ -137,8 +127,9 @@ jobs:
 
       - name: Run tests
         run: |
-          if [[ -f "~/.bash_env" ]]; then
-              source ~/.bash_env
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+              export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
+              export PYO3_PYTHON="${{ env.PYO3_PYTHON }}"
           fi
 
           cargo build --tests --keep-going
