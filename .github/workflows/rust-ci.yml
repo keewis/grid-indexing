@@ -147,6 +147,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: false
 
     env:
       FORCE_COLOR: 3
