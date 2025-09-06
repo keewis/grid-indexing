@@ -105,6 +105,10 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYO3_PYTHON=$PYO3_PYTHON" >> $GITHUB_ENV
 
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+              echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> ~/.bash_env
+          fi
+
       - name: Help the linker on macos
         if: runner.os == 'MacOS'
         shell: bash {0}
@@ -119,7 +123,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash {0}
         run: |
-          cat $GITHUB_ENV
+          if [[ -f "~/.bash_env" ]]; then
+              source ~/.bash_env
+          fi
+
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" - type f)
 
@@ -128,6 +135,10 @@ jobs:
 
       - name: Run tests
         run: |
+          if [[ -f "~/.bash_env" ]]; then
+              source ~/.bash_env
+          fi
+
           cargo build --tests --keep-going
           cargo test --no-fail-fast
 
