@@ -102,8 +102,9 @@ jobs:
 
       - name: Clean up pkg-config
         if: runner.os == 'Windows'
-        shell: bash -l {0}
         run: |
+          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
+
           # remove dependency paths
           sed -i '/Requires.private:/d' $(find $PKG_CONFIG_PATH -name "*.pc" -type f)
 
@@ -112,6 +113,11 @@ jobs:
 
       - name: Install the package
         run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+              export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
+              export PYO3_PYTHON="${{ env.PYO3_PYTHON }}"
+          fi
+
           maturin develop
 
       - name: Check imports

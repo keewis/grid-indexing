@@ -1,0 +1,7 @@
+rules:
+  template-injection:
+    ignore:
+      # workaround for git bash on windows ignoring PKG_CONFIG_PATH
+      - python-ci.yml:106
+      - python-ci.yml:117
+      - python-ci.yml:118
