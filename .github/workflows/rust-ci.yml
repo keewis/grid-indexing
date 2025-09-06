@@ -45,13 +45,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          #- "ubuntu-latest"
-          # building proj-sys on windows appears to not really be possible
+          - "ubuntu-latest"
           - "windows-latest"
-          #- "macos-latest"
+          - "macos-latest"
         python-version:
-          # - "3.10"
-          # - "3.12"
+          - "3.10"
+          - "3.12"
           - "3.13"
 
     env:
@@ -138,7 +137,6 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    if: false
 
     env:
       FORCE_COLOR: 3
