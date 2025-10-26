@@ -24,3 +24,4 @@ pyo3-arrow = "0.8"
 arrow = "54.3"
 rstar = { version = "0.12", features = ["serde"] }
 serde = "1.0"
+num-traits = "0.2.19"

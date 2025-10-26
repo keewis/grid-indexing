@@ -786,6 +786,7 @@ dependencies = [
  "bincode",
  "geo",
  "geoarrow",
+ "num-traits",
  "numpy",
  "proj",
  "pyo3",
