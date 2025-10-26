@@ -88,14 +88,34 @@ impl SphericalPoint {
         Self::generate(|_| value)
     }
 
-    /// Returns a Point with each component set to the smallest of each component pair of `self` and `other`.
+    /// Returns the Point that is the south-west corner of the box defined by `self` and `other`.
     pub fn min_point(&self, other: &Self) -> Self {
-        self.component_wise(other, min_inline)
+        // For spherical coords: choose the westernmost longitude using the smaller
+        // angle between the two points. With that, we define l1 as west of l2
+        // if the angle from l1 to l2 is less than 180 degree.
+        let min_lat = self.lat.min(other.lat);
+        let min_lon = if (other.lon - self.lon).rem_euclid(360.0) <= 180.0 {
+            self.lon
+        } else {
+            other.lon
+        };
+
+        Self::create(min_lon, min_lat)
     }
 
-    /// Returns a Point with each component set to the biggest of each component pair of `self` and `other`.
+    /// Returns the Point that is the north-east corner of the box defined by `self` and `other`.
     pub fn max_point(&self, other: &Self) -> Self {
-        self.component_wise(other, max_inline)
+        // For spherical coords: choose the easternmost longitude using the smaller
+        // angle between the two points. With that, we define l1 as east of l2
+        // if the angle from l1 to l2 is greater than 180 degree.
+        let max_lat = self.lat.max(other.lat);
+        let max_lon = if (other.lon - self.lon).rem_euclid(360.0) > 180.0 {
+            self.lon
+        } else {
+            other.lon
+        };
+
+        Self::create(max_lon, max_lat)
     }
 
     /// Returns the squared length of this Point as if it was a vector.
