@@ -256,6 +256,20 @@ mod tests {
     }
 
     #[test]
+    fn test_from_corners_central() {
+        let p1 = SphericalPoint::create(10.0, 10.0);
+        let p2 = SphericalPoint::create(350.0, -20.0);
+
+        let actual = SphericalAABB::from_corners(p1, p2);
+        let expected = SphericalAABB {
+            lower: SphericalPoint::create(350.0, -20.0),
+            upper: SphericalPoint::create(10.0, 10.0),
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn test_from_points() {
         let points = vec![
             SphericalPoint::create(0.0, 0.0),
