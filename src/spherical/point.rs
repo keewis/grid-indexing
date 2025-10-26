@@ -19,6 +19,7 @@ impl Point for SphericalPoint {
         }
     }
 
+    #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
             0 => self.lon,
@@ -27,6 +28,7 @@ impl Point for SphericalPoint {
         }
     }
 
+    #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
             0 => &mut self.lon,
