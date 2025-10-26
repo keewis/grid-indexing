@@ -198,34 +198,19 @@ mod tests {
 
     #[test]
     fn test_component_wise() {
-        let p1 = SphericalPoint {
-            lon: 10.0,
-            lat: 10.0,
-        };
-        let p2 = SphericalPoint {
-            lon: 20.0,
-            lat: 5.0,
-        };
+        let p1 = SphericalPoint::create(10.0, 10.0);
+        let p2 = SphericalPoint::create(20.0, 5.0);
 
         let actual = p1.component_wise(&p2, |a, b| a - b);
-        let expected = SphericalPoint {
-            lon: -10.0,
-            lat: 5.0,
-        };
+        let expected = SphericalPoint::create(-10.0, 5.0);
 
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn test_all_component_wise() {
-        let p1 = SphericalPoint {
-            lon: 10.0,
-            lat: 10.0,
-        };
-        let p2 = SphericalPoint {
-            lon: 5.0,
-            lat: 15.0,
-        };
+        let p1 = SphericalPoint::create(10.0, 10.0);
+        let p2 = SphericalPoint::create(5.0, 15.0);
 
         let actual = p1.all_component_wise(&p2, |a, b| (a - b).abs() < 10.0);
 
