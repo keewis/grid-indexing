@@ -42,6 +42,10 @@ impl SphericalPoint {
         Self::from_value(Zero::zero())
     }
 
+    pub fn create(lon: f64, lat: f64) -> Self {
+        Self { lon, lat }
+    }
+
     /// Applies `f` to each pair of components of `self` and `other`.
     pub fn component_wise(
         &self,
@@ -160,6 +164,14 @@ mod tests {
 
         assert_eq!(actual.lon, 0f64);
         assert_eq!(actual.lat, 0f64);
+    }
+
+    #[test]
+    fn test_create() {
+        let actual = SphericalPoint::create(2.0, 6.0);
+
+        assert_eq!(actual.lon, 2.0);
+        assert_eq!(actual.lat, 6.0);
     }
 
     #[test]
