@@ -146,3 +146,89 @@ where
         b
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        let actual = SphericalPoint::new();
+
+        assert_eq!(actual.lon, 0f64);
+        assert_eq!(actual.lat, 0f64);
+    }
+
+    #[test]
+    fn test_component_wise() {
+        let p1 = SphericalPoint {
+            lon: 10.0,
+            lat: 10.0,
+        };
+        let p2 = SphericalPoint {
+            lon: 20.0,
+            lat: 5.0,
+        };
+
+        let actual = p1.component_wise(&p2, |a, b| a - b);
+        let expected = SphericalPoint {
+            lon: -10.0,
+            lat: 5.0,
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_all_component_wise() {
+        let p1 = SphericalPoint {
+            lon: 10.0,
+            lat: 10.0,
+        };
+        let p2 = SphericalPoint {
+            lon: 5.0,
+            lat: 15.0,
+        };
+
+        let actual = p1.all_component_wise(&p2, |a, b| (a - b).abs() < 10.0);
+
+        assert!(actual);
+    }
+
+    #[test]
+    fn test_min_point() {
+        let p1 = SphericalPoint {
+            lon: 10.0,
+            lat: 0.0,
+        };
+        let p2 = SphericalPoint {
+            lon: 0.0,
+            lat: 10.0,
+        };
+
+        let actual = p1.min_point(&p2);
+        let expected = SphericalPoint { lon: 0.0, lat: 0.0 };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_max_point() {
+        let p1 = SphericalPoint {
+            lon: 10.0,
+            lat: 0.0,
+        };
+        let p2 = SphericalPoint {
+            lon: 0.0,
+            lat: 10.0,
+        };
+
+        let actual = p1.max_point(&p2);
+        let expected = SphericalPoint {
+            lon: 10.0,
+            lat: 10.0,
+        };
+
+        assert_eq!(actual, expected);
+    }
+}
