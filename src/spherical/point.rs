@@ -2,7 +2,7 @@ use num_traits::Zero;
 use rstar::{Point, RTreeNum};
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct SphericalPoint {
     lon: f64,
     lat: f64,
