@@ -230,7 +230,27 @@ mod tests {
     }
 
     #[test]
-    fn test_max_point() {
+    fn test_min_point2() {
+        let p1 = SphericalPoint {
+            lon: 350.0,
+            lat: 0.0,
+        };
+        let p2 = SphericalPoint {
+            lon: 0.0,
+            lat: 10.0,
+        };
+
+        let actual = p1.min_point(&p2);
+        let expected = SphericalPoint {
+            lon: 350.0,
+            lat: 0.0,
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_max_point1() {
         let p1 = SphericalPoint {
             lon: 10.0,
             lat: 0.0,
@@ -243,6 +263,26 @@ mod tests {
         let actual = p1.max_point(&p2);
         let expected = SphericalPoint {
             lon: 10.0,
+            lat: 10.0,
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_max_point2() {
+        let p1 = SphericalPoint {
+            lon: 350.0,
+            lat: 0.0,
+        };
+        let p2 = SphericalPoint {
+            lon: 0.0,
+            lat: 10.0,
+        };
+
+        let actual = p1.max_point(&p2);
+        let expected = SphericalPoint {
+            lon: 0.0,
             lat: 10.0,
         };
 
