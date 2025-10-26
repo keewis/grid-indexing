@@ -1,4 +1,5 @@
-use rstar::{Point, PointExt};
+use num_traits::Zero;
+use rstar::{Point, RTreeNum};
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, PartialEq, Debug, Deserialize, Serialize)]
@@ -35,7 +36,7 @@ impl Point for SphericalPoint {
     }
 }
 
-impl PointExt for SphericalPoint {
+impl SphericalPoint {
     /// Returns a new Point with all components set to zero.
     fn new() -> Self {
         Self::from_value(Zero::zero())
@@ -45,7 +46,7 @@ impl PointExt for SphericalPoint {
     fn component_wise(
         &self,
         other: &Self,
-        mut f: impl FnMut(Self::Scalar, Self::Scalar) -> Self::Scalar,
+        mut f: impl FnMut(<Self as Point>::Scalar, <Self as Point>::Scalar) -> <Self as Point>::Scalar,
     ) -> Self {
         Self::generate(|i| f(self.nth(i), other.nth(i)))
     }
@@ -54,13 +55,13 @@ impl PointExt for SphericalPoint {
     fn all_component_wise(
         &self,
         other: &Self,
-        mut f: impl FnMut(Self::Scalar, Self::Scalar) -> bool,
+        mut f: impl FnMut(<Self as Point>::Scalar, <Self as Point>::Scalar) -> bool,
     ) -> bool {
         (0..Self::DIMENSIONS).all(|i| f(self.nth(i), other.nth(i)))
     }
 
     /// Returns the dot product of `self` and `rhs`.
-    fn dot(&self, rhs: &Self) -> Self::Scalar {
+    fn dot(&self, rhs: &Self) -> <Self as Point>::Scalar {
         self.component_wise(rhs, |l, r| l * r)
             .fold(Zero::zero(), |acc, val| acc + val)
     }
@@ -72,12 +73,12 @@ impl PointExt for SphericalPoint {
     /// The `start_value` is the value the accumulator will have on the first call of the closure.
     ///
     /// After applying the closure to every component of the Point, fold() returns the accumulator.
-    fn fold<T>(&self, start_value: T, mut f: impl FnMut(T, Self::Scalar) -> T) -> T {
+    fn fold<T>(&self, start_value: T, mut f: impl FnMut(T, <Self as Point>::Scalar) -> T) -> T {
         (0..Self::DIMENSIONS).fold(start_value, |accumulated, i| f(accumulated, self.nth(i)))
     }
 
     /// Returns a Point with every component set to `value`.
-    fn from_value(value: Self::Scalar) -> Self {
+    fn from_value(value: <Self as Point>::Scalar) -> Self {
         Self::generate(|_| value)
     }
 
@@ -92,7 +93,7 @@ impl PointExt for SphericalPoint {
     }
 
     /// Returns the squared length of this Point as if it was a vector.
-    fn length_2(&self) -> Self::Scalar {
+    fn length_2(&self) -> <Self as Point>::Scalar {
         self.fold(Zero::zero(), |acc, cur| cur * cur + acc)
     }
 
@@ -107,17 +108,41 @@ impl PointExt for SphericalPoint {
     }
 
     /// Multiplies `self` with `scalar` component wise.
-    fn mul(&self, scalar: Self::Scalar) -> Self {
+    fn mul(&self, scalar: <Self as Point>::Scalar) -> Self {
         self.map(|coordinate| coordinate * scalar)
     }
 
     /// Applies `f` to `self` component wise.
-    fn map(&self, mut f: impl FnMut(Self::Scalar) -> Self::Scalar) -> Self {
+    fn map(&self, mut f: impl FnMut(<Self as Point>::Scalar) -> <Self as Point>::Scalar) -> Self {
         Self::generate(|i| f(self.nth(i)))
     }
 
     /// Returns the squared distance between `self` and `other`.
-    fn distance_2(&self, other: &Self) -> Self::Scalar {
+    fn distance_2(&self, other: &Self) -> <Self as Point>::Scalar {
         self.sub(other).length_2()
+    }
+}
+
+#[inline]
+pub fn min_inline<S>(a: S, b: S) -> S
+where
+    S: RTreeNum,
+{
+    if a < b {
+        a
+    } else {
+        b
+    }
+}
+
+#[inline]
+pub fn max_inline<S>(a: S, b: S) -> S
+where
+    S: RTreeNum,
+{
+    if a > b {
+        a
+    } else {
+        b
     }
 }
