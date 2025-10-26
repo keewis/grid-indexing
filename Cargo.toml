@@ -25,3 +25,6 @@ arrow = "54.3"
 rstar = { version = "0.12", features = ["serde"] }
 serde = "1.0"
 num-traits = "0.2.19"
+geodesy = "0.14.0"
+lru = "0.16.2"
+moka = { version = "0.12.11", features = ["sync"] }
