@@ -207,7 +207,7 @@ jobs:
       # - windows
       - macos
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: "wheels-*"
           path: dist
