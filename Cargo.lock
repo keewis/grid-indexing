@@ -783,6 +783,7 @@ dependencies = [
  "arrow",
  "bincode",
  "geo",
+ "geo-traits",
  "geoarrow-array",
  "geoarrow-cast",
  "numpy",
