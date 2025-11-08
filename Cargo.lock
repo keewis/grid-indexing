@@ -733,9 +733,9 @@ dependencies = [
 
 [[package]]
 name = "geoarrow-schema"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "278e963401cfb23b4f81b212605b33b342ab73741d39b80de51cc7028d6d3af4"
+checksum = "02f1b18b1c9a44ecd72be02e53d6e63bbccfdc8d1765206226af227327e2be6e"
 dependencies = [
  "arrow-schema 56.2.0",
  "geo-traits",
@@ -786,6 +786,7 @@ dependencies = [
  "geo-traits",
  "geoarrow-array",
  "geoarrow-cast",
+ "geoarrow-schema",
  "numpy",
  "proj",
  "pyo3",
