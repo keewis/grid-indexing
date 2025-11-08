@@ -1,6 +1,7 @@
 use geo::{Polygon, Relate};
-use geoarrow::array::PolygonArray;
-use geoarrow::trait_::{ArrayAccessor, NativeScalar};
+use geo_traits::to_geo::ToGeoGeometry;
+use geoarrow_array::array::PolygonArray;
+use geoarrow_array::GeoArrowArrayAccessor;
 use rstar::{RTree, RTreeObject};
 use serde::{Deserialize, Serialize};
 
@@ -12,12 +13,12 @@ pub struct CellRTree {
 }
 
 impl CellRTree {
-    pub fn create(cell_geoms: PolygonArray) -> Self {
+    pub fn create(cell_geoms: &PolygonArray) -> Self {
         let cells: Vec<_> = cell_geoms
             .iter()
             .flatten()
             .enumerate()
-            .map(|c| NumberedCell::new(c.0, c.1.to_geo()))
+            .map(|c| NumberedCell::new(c.0, c.1.unwrap().to_geometry().try_into().unwrap()))
             .collect();
 
         CellRTree {
@@ -52,7 +53,7 @@ impl CellRTree {
         cells
             .iter()
             .flatten()
-            .map(|cell| self.overlaps_one(cell.to_geo()))
+            .map(|cell| self.overlaps_one(cell.unwrap().to_geometry().try_into().unwrap()))
             .collect()
     }
 }
@@ -62,15 +63,15 @@ mod tests {
     use super::*;
 
     use geo::{coord, Coord, LineString, Polygon, Rect};
-    use geoarrow::array::PolygonBuilder;
-    use geoarrow::datatypes::Dimension;
+    use geoarrow_array::builder::PolygonBuilder;
+    use geoarrow_schema::{Dimension, PolygonType};
 
-    fn bbox(ll: Coord, ur: Coord) -> Option<Polygon> {
-        Some(Rect::new(ll, ur).to_polygon())
+    fn bbox(ll: Coord, ur: Coord) -> Polygon {
+        Rect::new(ll, ur).to_polygon()
     }
 
-    fn polygon(exterior: Vec<(f64, f64)>) -> Option<Polygon> {
-        Some(Polygon::new(LineString::from(exterior), vec![]))
+    fn polygon(exterior: Vec<(f64, f64)>) -> Polygon {
+        Polygon::new(LineString::from(exterior), vec![])
     }
 
     fn normalize_result(result: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
@@ -108,12 +109,12 @@ mod tests {
             vec![],
         );
 
-        let mut builder = PolygonBuilder::new(Dimension::XY);
+        let mut builder = PolygonBuilder::new(PolygonType::new(Dimension::XY, Default::default()));
         let _ = builder.push_polygon(Some(&polygon1));
         let _ = builder.push_polygon(Some(&polygon2));
         let array: PolygonArray = builder.finish();
 
-        let index = CellRTree::create(array);
+        let index = CellRTree::create(&array);
 
         assert_eq!(index.tree.size(), 2);
     }
@@ -128,47 +129,55 @@ mod tests {
     fn test_size() {
         assert_eq!(CellRTree::empty().size(), 0);
 
-        let array1 = PolygonArray::from((
-            vec![bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0})],
-            Dimension::XY,
-        ));
-        assert_eq!(CellRTree::create(array1).size(), 1);
+        let polygons = vec![bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0})];
+        let array1 = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
+        assert_eq!(CellRTree::create(&array1).size(), 1);
 
-        let array2 = PolygonArray::from((
-            vec![
-                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
-                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
-                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
-                bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
-            ],
-            Dimension::XY,
-        ));
-        assert_eq!(CellRTree::create(array2).size(), 4);
+        let polygons = vec![
+            bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+            bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+            bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+            bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+        ];
+        let array2 = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
+        assert_eq!(CellRTree::create(&array2).size(), 4);
     }
 
     /// check the basic functionality of the overlap search
     #[test]
     fn test_overlaps_rectilinear() {
-        let source = PolygonArray::from((
-            vec![
-                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
-                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
-                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
-                bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
-            ],
-            Dimension::XY,
-        ));
-        let index = CellRTree::create(source);
+        let polygons = vec![
+            bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+            bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+            bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+            bbox(coord! {x: 1.0, y: 1.0}, coord! {x: 2.0, y: 2.0}),
+        ];
+        let source = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
+        let index = CellRTree::create(&source);
 
-        let target = PolygonArray::from((
-            vec![
-                bbox(coord! {x: 0.2, y: 0.0}, coord! {x: 1.5, y: 1.0}),
-                bbox(coord! {x: 0.6, y: 1.2}, coord! {x: 0.9, y: 1.8}),
-                bbox(coord! {x: 0.3, y: 0.2}, coord! {x: 1.3, y: 1.6}),
-                bbox(coord! {x: 2.1, y: 2.3}, coord! {x: 2.7, y: 3.1}),
-            ],
-            Dimension::XY,
-        ));
+        let polygons = vec![
+            bbox(coord! {x: 0.2, y: 0.0}, coord! {x: 1.5, y: 1.0}),
+            bbox(coord! {x: 0.6, y: 1.2}, coord! {x: 0.9, y: 1.8}),
+            bbox(coord! {x: 0.3, y: 0.2}, coord! {x: 1.3, y: 1.6}),
+            bbox(coord! {x: 2.1, y: 2.3}, coord! {x: 2.7, y: 3.1}),
+        ];
+        let target = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
         let actual = index.overlaps(&target);
         let expected: Vec<Vec<usize>> = vec![vec![0, 1], vec![2], vec![0, 1, 2, 3], vec![]];
         assert_eq!(normalize_result(actual), expected);
@@ -177,22 +186,26 @@ mod tests {
     /// check touches
     #[test]
     fn test_overlaps_touches() {
-        let source = PolygonArray::from((
-            vec![
-                bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
-                bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
-            ],
-            Dimension::XY,
-        ));
-        let index = CellRTree::create(source);
+        let polygons = vec![
+            bbox(coord! {x: 0.0, y: 0.0}, coord! {x: 1.0, y: 1.0}),
+            bbox(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+        ];
+        let source = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
+        let index = CellRTree::create(&source);
 
-        let target = PolygonArray::from((
-            vec![
-                bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
-                bbox(coord! {x: 2.0, y: 0.0}, coord! {x: 3.0, y: 1.0}),
-            ],
-            Dimension::XY,
-        ));
+        let polygons = vec![
+            bbox(coord! {x: 0.0, y: 1.0}, coord! {x: 1.0, y: 2.0}),
+            bbox(coord! {x: 2.0, y: 0.0}, coord! {x: 3.0, y: 1.0}),
+        ];
+        let target = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
         let actual = index.overlaps(&target);
         let expected: Vec<Vec<usize>> = vec![vec![], vec![]];
         assert_eq!(normalize_result(actual), expected);
@@ -201,34 +214,38 @@ mod tests {
     /// check that the additional filter works properly
     #[test]
     fn test_overlaps_tilted() {
-        let source = PolygonArray::from((
-            vec![
-                polygon(vec![
-                    (0.0, 0.0),
-                    (1.0, 0.0),
-                    (1.5, 1.0),
-                    (0.5, 1.0),
-                    (0.0, 0.0),
-                ]),
-                polygon(vec![
-                    (1.0, 0.0),
-                    (2.0, 0.0),
-                    (2.5, 1.0),
-                    (1.5, 1.0),
-                    (1.0, 0.0),
-                ]),
-            ],
-            Dimension::XY,
-        ));
-        let index = CellRTree::create(source);
+        let polygons = vec![
+            polygon(vec![
+                (0.0, 0.0),
+                (1.0, 0.0),
+                (1.5, 1.0),
+                (0.5, 1.0),
+                (0.0, 0.0),
+            ]),
+            polygon(vec![
+                (1.0, 0.0),
+                (2.0, 0.0),
+                (2.5, 1.0),
+                (1.5, 1.0),
+                (1.0, 0.0),
+            ]),
+        ];
+        let source = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
+        let index = CellRTree::create(&source);
 
-        let target = PolygonArray::from((
-            vec![
-                bbox(coord! {x: -1.0, y: 0.8}, coord! {x: 0.2, y: 1.5}),
-                bbox(coord! {x: 2.4, y: 0.9}, coord! {x: 3.0, y: 2.0}),
-            ],
-            Dimension::XY,
-        ));
+        let polygons = vec![
+            bbox(coord! {x: -1.0, y: 0.8}, coord! {x: 0.2, y: 1.5}),
+            bbox(coord! {x: 2.4, y: 0.9}, coord! {x: 3.0, y: 2.0}),
+        ];
+        let target = PolygonBuilder::from_polygons(
+            &polygons,
+            PolygonType::new(Dimension::XY, Default::default()),
+        )
+        .finish();
 
         let actual = index.overlaps(&target);
         let expected: Vec<Vec<usize>> = vec![vec![], vec![1]];

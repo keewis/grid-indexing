@@ -1,13 +1,14 @@
 use super::index::CellRTree;
-use super::trait_::{AsPolygonArray, AsSparse};
+use super::trait_::AsSparse;
 use bincode::{deserialize, serialize};
-use geoarrow::array::ArrayBase;
+use geoarrow_array::cast::AsGeoArrowArray;
+use geoarrow_array::GeoArrowArray;
 use numpy::{PyArrayDyn, PyUntypedArrayMethods};
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::intern;
 use pyo3::prelude::*;
 use pyo3::types::{IntoPyDict, PyBytes, PyTuple, PyType};
-use pyo3_arrow::PyArray;
+use pyo3_geoarrow::PyGeoArray;
 use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
@@ -74,8 +75,8 @@ where
 impl RTree {
     #[new]
     #[pyo3(signature=(source_cells, shape=None))]
-    pub fn new(source_cells: PyArray, shape: Option<&Bound<PyTuple>>) -> PyResult<Self> {
-        let polygons = source_cells.into_polygon_array()?;
+    pub fn new(source_cells: PyGeoArray, shape: Option<&Bound<PyTuple>>) -> PyResult<Self> {
+        let polygons = source_cells.inner().as_polygon();
         let shape_: Vec<usize> = match shape {
             None => vec![polygons.len()],
             Some(shape) => shape.extract()?,
@@ -105,7 +106,7 @@ impl RTree {
         Ok(bytes)
     }
 
-    pub fn __reduce__(&self, py: Python) -> PyResult<(PyObject, PyObject, PyObject)> {
+    pub fn __reduce__(&self, py: Python) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
         let create = py.import("grid_indexing")?.getattr("create_empty")?;
         let args = ();
         let state = self.__getstate__(py)?;
@@ -131,8 +132,8 @@ impl RTree {
     ///     The :py:class:`RTree` instance.
     #[classmethod]
     pub fn from_shapely(_cls: &Bound<'_, PyType>, geoms: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Python::with_gil(|py| {
-            let pyarray = geoms.downcast::<PyArrayDyn<PyObject>>()?;
+        Python::attach(|py| {
+            let pyarray = geoms.downcast::<PyArrayDyn<Py<PyAny>>>()?;
 
             let shape = PyTuple::new(py, pyarray.shape())?;
             let geoarrow = PyModule::import(py, "geoarrow.rust.core")?;
@@ -147,7 +148,7 @@ impl RTree {
                 .getattr("from_shapely")?
                 .call((flattened,), Some(&kwargs))?;
 
-            let array = PyArray::extract_bound(&pyobj)?;
+            let array = PyGeoArray::extract_bound(&pyobj)?;
 
             Self::new(array, Some(&shape))
         })
@@ -178,10 +179,10 @@ impl RTree {
     #[pyo3(signature=(target_cells, shape=None))]
     pub fn query_overlap(
         &self,
-        target_cells: PyArray,
+        target_cells: PyGeoArray,
         shape: Option<&Bound<PyTuple>>,
     ) -> PyResult<Py<PyAny>> {
-        let polygons = target_cells.into_polygon_array()?;
+        let polygons = target_cells.inner().as_polygon();
         let intermediate_shape = (polygons.len(), self.tree.size());
 
         let target_shape = match shape {
@@ -191,7 +192,7 @@ impl RTree {
         let final_shape: Vec<&usize> = target_shape.iter().chain(self.shape.iter()).collect();
 
         self.tree
-            .overlaps(&polygons)
+            .overlaps(polygons)
             .into_sparse(intermediate_shape, final_shape)
     }
 
@@ -223,7 +224,7 @@ impl RTree {
     #[pyo3(signature=(target_cells, *, shape=None, method=None))]
     pub fn query(
         &self,
-        target_cells: PyArray,
+        target_cells: PyGeoArray,
         shape: Option<&Bound<PyTuple>>,
         method: Option<String>,
     ) -> PyResult<Py<PyAny>> {
