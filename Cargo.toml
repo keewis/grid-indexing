@@ -21,10 +21,10 @@ proj = { version = "0.31", features = ["pkg_config"] }
 pyo3 = { version = "0.26", features = ["serde"] }
 pyo3-arrow = "0.14"
 arrow = "57"
-rstar = { version = "0.12", features = ["serde"] }
+rstar = { version = "0.12.2", features = ["serde"] }
 serde = "1.0"
-geoarrow-array = "0.6.1"
-geoarrow-cast = "0.6.1"
-pyo3-geoarrow = "0.6.1"
+geoarrow-array = "0.6.2"
+geoarrow-cast = "0.6.2"
+pyo3-geoarrow = "0.6.2"
 geo-traits = "0.3.0"
 geoarrow-schema = "0.6.2"
