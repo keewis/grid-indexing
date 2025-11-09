@@ -49,9 +49,8 @@ jobs:
           - "windows-latest"
           - "macos-latest"
         python-version:
-          - "3.10"
-          - "3.12"
-          - "3.13"
+          - "3.11"
+          - "3.14"
 
     env:
       FORCE_COLOR: 3
