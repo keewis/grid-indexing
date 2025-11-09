@@ -50,7 +50,7 @@ jobs:
           - "macos-latest"
         python-version:
           - "3.11"
-          - "3.14"
+          - "3.13"
 
     env:
       FORCE_COLOR: 3
