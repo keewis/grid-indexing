@@ -291,4 +291,33 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn test_min_point() {
+        let aabb = SphericalAABB {
+            lower: SphericalPoint::create(350.0, -20.0),
+            upper: SphericalPoint::create(10.0, 10.0),
+        };
+
+        let point = SphericalPoint::create(15.0, 0.0);
+        let expected = SphericalPoint::create(10.0, 0.0);
+
+        let actual = aabb.min_point(&point);
+
+        assert_eq!(actual, expected);
+
+        let point = SphericalPoint::create(320.0, -40.0);
+        let expected = SphericalPoint::create(350.0, -20.0);
+
+        let actual = aabb.min_point(&point);
+
+        assert_eq!(actual, expected);
+
+        let point = SphericalPoint::create(359.0, -10.0);
+        let expected = SphericalPoint::create(359.0, -10.0);
+
+        let actual = aabb.min_point(&point);
+
+        assert_eq!(actual, expected);
+    }
 }
