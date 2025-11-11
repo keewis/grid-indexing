@@ -45,7 +45,10 @@ impl SphericalPoint {
     }
 
     pub fn create(lon: f64, lat: f64) -> Self {
-        Self { lon, lat }
+        Self {
+            lon: lon.rem_euclid(360.0),
+            lat,
+        }
     }
 
     /// Applies `f` to each pair of components of `self` and `other`.
