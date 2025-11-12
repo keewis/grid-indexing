@@ -14,7 +14,7 @@ impl Point for SphericalPoint {
 
     fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
         Self {
-            lon: generator(0),
+            lon: generator(0).rem_euclid(360.0),
             lat: generator(1),
         }
     }
