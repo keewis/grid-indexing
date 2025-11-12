@@ -89,8 +89,8 @@ impl Envelope for SphericalAABB {
     }
 
     fn contains_point(&self, point: &SphericalPoint) -> bool {
-        self.lower.all_component_wise(point, |x, y| x <= y)
-            && self.upper.all_component_wise(point, |x, y| x >= y)
+        self.min_point(point)
+            .all_component_wise(point, |l, r| l == r)
     }
 
     fn contains_envelope(&self, other: &Self) -> bool {
@@ -319,5 +319,28 @@ mod tests {
         let actual = aabb.min_point(&point);
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_contains_point() {
+        let aabb = SphericalAABB {
+            lower: SphericalPoint::create(-10.0, -20.0),
+            upper: SphericalPoint::create(10.0, 10.0),
+        };
+
+        let point = SphericalPoint::create(-5.0, 5.0);
+        let actual = aabb.contains_point(&point);
+
+        assert!(actual);
+
+        let point = SphericalPoint::create(345.0, 5.0);
+        let actual = aabb.contains_point(&point);
+
+        assert!(!actual);
+
+        let point = SphericalPoint::create(5.0, -45.0);
+        let actual = aabb.contains_point(&point);
+
+        assert!(!actual);
     }
 }
