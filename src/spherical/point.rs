@@ -1,3 +1,5 @@
+use geodesy::coord::Coor2D;
+use geodesy::ellps::{Ellipsoid, Geodesics};
 use num_traits::Zero;
 use rstar::{Point, RTreeNum};
 use serde::{Deserialize, Serialize};
@@ -151,7 +153,12 @@ impl SphericalPoint {
 
     /// Returns the squared distance between `self` and `other`.
     pub fn distance_2(&self, other: &Self) -> <Self as Point>::Scalar {
-        self.sub(other).length_2()
+        let ellipsoid = Ellipsoid::new(6371000.0, 1.0);
+
+        let p1 = Coor2D::gis(self.lon, self.lat);
+        let p2 = Coor2D::gis(other.lon, other.lat);
+
+        ellipsoid.distance(&p1, &p2).powi(2)
     }
 }
 
