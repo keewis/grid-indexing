@@ -94,8 +94,8 @@ impl Envelope for SphericalAABB {
     }
 
     fn contains_envelope(&self, other: &Self) -> bool {
-        self.lower.all_component_wise(&other.lower, |l, r| l <= r)
-            && self.upper.all_component_wise(&other.upper, |l, r| l >= r)
+        // other is contained if both corner points are contained
+        self.contains_point(&other.lower) && self.contains_point(other.upper)
     }
 
     fn merge(&mut self, other: &Self) {
