@@ -123,7 +123,7 @@ impl Envelope for SphericalAABB {
     }
 
     fn distance_2(&self, point: &SphericalPoint) -> <SphericalPoint as Point>::Scalar {
-        self.distance_2(point)
+        self.min_point(point).distance_2(point)
     }
 
     fn min_max_dist_2(&self, point: &SphericalPoint) -> <SphericalPoint as Point>::Scalar {
