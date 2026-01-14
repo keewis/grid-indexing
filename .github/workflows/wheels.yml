@@ -50,7 +50,7 @@ jobs:
         uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
+          args: --release --out dist -i 3.11 -i 3.12 -i 3.13
           sccache: "false"
           manylinux: ${{ matrix.manylinux }}
           before-script-linux: |
@@ -92,7 +92,7 @@ jobs:
         uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
+          args: --release --out dist -i 3.11 -i 3.12 -i 3.13
           sccache: "false"
           manylinux: musllinux_1_2
           before-script-linux: |
@@ -132,7 +132,7 @@ jobs:
         uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
+          args: --release --out dist -i 3.11 -i 3.12 -i 3.13
           sccache: "false"
 
       - name: Upload wheels
@@ -163,7 +163,7 @@ jobs:
         uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
+          args: --release --out dist -i 3.11 -i 3.12 -i 3.13
           sccache: "false"
 
       - name: Upload wheels
