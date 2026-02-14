@@ -47,7 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
@@ -89,7 +89,7 @@ jobs:
           persist-credentials: false
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
@@ -129,7 +129,7 @@ jobs:
           pkg-config --list-all
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
@@ -160,7 +160,7 @@ jobs:
           pkg-config --list-all
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
