@@ -47,7 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
@@ -61,7 +61,7 @@ jobs:
             pkg-config --list-all
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
@@ -89,7 +89,7 @@ jobs:
           persist-credentials: false
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
@@ -103,7 +103,7 @@ jobs:
             pkg-config --list-all
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
@@ -129,14 +129,14 @@ jobs:
           pkg-config --list-all
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
           sccache: "false"
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
@@ -160,14 +160,14 @@ jobs:
           pkg-config --list-all
 
       - name: Build wheels
-        uses: PyO3/maturin-action@86b9d133d34bc1b40018696f782949dac11bd380 # v1.49.4
+        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i 3.10 -i 3.11 -i 3.12 -i 3.13
           sccache: "false"
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-macos-${{ matrix.platform.target }}
           path: dist
@@ -182,7 +182,7 @@ jobs:
   #         command: sdist
   #         args: --out dist
   #     - name: Upload sdist
-  #       uses: actions/upload-artifact@v6
+  #       uses: actions/upload-artifact@v7
   #       with:
   #         name: wheels-sdist
   #         path: dist
@@ -216,7 +216,7 @@ jobs:
         shell: bash
         run: ls -lR
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*.whl"
       - name: Publish to PyPI
