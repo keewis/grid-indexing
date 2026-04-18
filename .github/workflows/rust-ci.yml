@@ -72,7 +72,7 @@ jobs:
       #     toolchain: stable
 
       - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # 2.0.7
+        uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476 # 3.0.0
         with:
           environment-name: rust-tests
           environment-file: ci/requirements/environment-rust.yaml
@@ -82,7 +82,7 @@ jobs:
             python=${{ matrix.python-version }}
 
       # - name: Create rust cache
-      #   uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # 2.8.2
+      #   uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # 2.9.1
       #   with:
       #     prefix-key: "py${{ matrix.python-version }}"
 
@@ -162,7 +162,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # 2.0.7
+        uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476 # 3.0.0
         with:
           environment-name: rust-tests
           environment-file: ci/requirements/environment-rust.yaml
@@ -172,7 +172,7 @@ jobs:
             python=${{ matrix.python-version }}
 
       - name: Create rust cache
-        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # 2.8.2
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # 2.9.1
 
       - name: Cargo clippy
         run: |
