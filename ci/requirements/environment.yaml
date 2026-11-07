@@ -18,4 +18,4 @@ dependencies:
   - distributed
   - pip
   - pip:
-      - geoarrow-rust-core==0.4.0b3
+      - geoarrow-rust-core>=0.6

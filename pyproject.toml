@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "grid-indexing"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
   "Programming Language :: Rust",
   "Programming Language :: Python :: Implementation :: CPython",
@@ -15,11 +15,11 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "sparse>=0.15",
-  "geoarrow-rust-core>=0.4.0b3",
+  "geoarrow-rust-core>=0.6",
   "shapely>=2.0",
   "numpy>=2.0",
   "cf-xarray>=0.9",
-  "xarray>=2024.11.0",
+  "xarray>=2025.8.0",
   "pyproj>=3.7",
 ]
 
@@ -42,7 +42,7 @@ python-source = "python"
 features = ["pyo3/extension-module"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 builtins = ["ellipsis"]
 exclude = [
   ".git",

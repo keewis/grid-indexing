@@ -1,6 +1,7 @@
 use super::index::CellRTree;
 use super::trait_::AsSparse;
-use bincode::{deserialize, serialize};
+use bincode::config;
+use bincode::serde::{decode_from_slice, encode_to_vec};
 use geoarrow_array::cast::AsGeoArrowArray;
 use geoarrow_array::GeoArrowArray;
 use numpy::{PyArrayDyn, PyUntypedArrayMethods};
@@ -93,7 +94,10 @@ impl RTree {
     pub fn __setstate__(&mut self, state: &[u8]) -> PyResult<()> {
         // Deserialize the data contained in the PyBytes object
         // and update the struct with the deserialized values.
-        *self = deserialize(state).map_err(|err| PyRuntimeError::new_err(err.to_string()))?;
+        let config = config::standard();
+
+        (*self, _) = decode_from_slice(state, config)
+            .map_err(|err| PyRuntimeError::new_err(err.to_string()))?;
 
         Ok(())
     }
@@ -101,7 +105,9 @@ impl RTree {
     pub fn __getstate__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
         // Serialize the struct and return a PyBytes object
         // containing the serialized data.
-        let serialized = serialize(&self).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+        let config = config::standard();
+        let serialized =
+            encode_to_vec(self, config).map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
         let bytes = PyBytes::new(py, &serialized);
         Ok(bytes)
     }
